@@ -29,9 +29,9 @@ func NewGaeGameStore() oak.EntityStore {
 				mtx.Unlock()
 				return
 			}
-			lastGaeClearOut = time.Now()
+			lastGaeClearOut = now()
 			mtx.Unlock()
-			q := datastore.NewQuery(kind).Filter(`DeleteAfter <=`, time.Now()).KeysOnly()
+			q := datastore.NewQuery(kind).Filter(`DeleteAfter <=`, now()).KeysOnly()
 			keys := []*datastore.Key // TODO - make this with a large len and cap and keep increasing in large chunk sizes, appending one every time is slow and inefficient
 			for iter := q.Run(context.Background()); ; {
 				key, err := iter.Next(nil)

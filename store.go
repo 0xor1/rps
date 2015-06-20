@@ -32,7 +32,7 @@ func NewGaeGameStore() oak.EntityStore {
 			lastGaeClearOut = now()
 			mtx.Unlock()
 			q := datastore.NewQuery(kind).Filter(`DeleteAfter <=`, now()).KeysOnly()
-			keys := []*datastore.Key // TODO - make this with a large len and cap and keep increasing in large chunk sizes, appending one every time is slow and inefficient
+			keys := []*datastore.Key{} // TODO - make this with a large len and cap and keep increasing in large chunk sizes, appending one every time is slow and inefficient
 			for iter := q.Run(context.Background()); ; {
 				key, err := iter.Next(nil)
 				if err == datastore.Done {
@@ -41,7 +41,7 @@ func NewGaeGameStore() oak.EntityStore {
 				if err != nil {
 					return
 				}
-				append(keys, key)
+				keys = append(keys, key)
 			}
 			nds.DeleteMulti(context.Background(), keys)
 		}
@@ -50,7 +50,7 @@ func NewGaeGameStore() oak.EntityStore {
 	return &gameStore{preprocess: pre, inner: sus.NewGaeStore(kind, sid.Uuid, func()sus.Version{return NewGame()})}
 }
 
-func NewLocalGameStore() oak.EntityStore {
+func NewMemoryGameStore() oak.EntityStore {
 	pre := func(){}
 	return &gameStore{preprocess: pre, inner: sus.NewJsonMemoryStore(sid.Uuid, func()sus.Version{return NewGame()})}
 }
@@ -63,24 +63,28 @@ type gameStore struct {
 func (gs *gameStore) Create() (string, oak.Entity, error) {
 	go gs.preprocess()
 	id, v, err := gs.inner.Create()
-	var e oak.Entity
+	var g *game
 	if err == nil && v != nil {
-		e = oak.Entity(v)
+		g = v.(*game)
 	}
-	return id, e, err
+	return id, g, err
 }
 
 func (gs *gameStore) Read(entityId string) (oak.Entity, error) {
 	go gs.preprocess()
 	v, err := gs.inner.Read(entityId)
-	var e oak.Entity
+	var g *game
 	if err == nil && v != nil {
-		e = oak.Entity(v)
+		g = v.(*game)
 	}
-	return e, err
+	return g, err
 }
 
 func (gs *gameStore) Update(entityId string, entity oak.Entity) (error) {
 	go gs.preprocess()
-	return gs.inner.Update(entityId, entity)
+	var g *game
+	if entity != nil {
+		g = entity.(*game)
+	}
+	return gs.inner.Update(entityId, g)
 }

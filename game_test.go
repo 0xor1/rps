@@ -11,9 +11,9 @@ func Test_NewGame(t *testing.T){
 	dur, _ := time.ParseDuration(_DELETE_AFTER)
 	delAft := now().Add(dur)
 
-	g := NewGame()
+	g := newGame().(*game)
 
-	assert.Equal(t, 0, g.Version.GetVersion(), `game should have initialised version to 0`)
+	assert.Equal(t, 0, g.GetVersion(), `game should have initialised version to 0`)
 	assert.Equal(t, delAft, g.DeleteAfter, `game should have initialised DeleteAfter`)
 	assert.NotEqual(t, ``, g.PlayerIds[0], `game should have initialised PlayerIds[0]`)
 	assert.Equal(t, ``, g.PlayerIds[1], `game should not have initialised PlayerIds[1]`)
@@ -24,7 +24,7 @@ func Test_NewGame(t *testing.T){
 }
 
 func Test_IsActive(t *testing.T){
-	g := NewGame()
+	g := newGame().(*game)
 
 	assert.True(t, g.IsActive(), `game should start as active`)
 
@@ -34,7 +34,7 @@ func Test_IsActive(t *testing.T){
 }
 
 func Test_CreatedBy(t *testing.T){
-	g := NewGame()
+	g := newGame().(*game)
 
 	assert.NotEqual(t, ``, g.CreatedBy(), `game should start with a non empty CreatedBy value`)
 
@@ -44,7 +44,7 @@ func Test_CreatedBy(t *testing.T){
 }
 
 func Test_RegisterNewUser(t *testing.T){
-	g := NewGame()
+	g := newGame().(*game)
 	userId, err := g.RegisterNewUser()
 
 	assert.NotEqual(t, ``, userId, `userId should be a non empty string`)
@@ -59,7 +59,7 @@ func Test_RegisterNewUser(t *testing.T){
 }
 
 func Test_UnregisterUser(t *testing.T){
-	g := NewGame()
+	g := newGame().(*game)
 	err := g.UnregisterUser(``)
 
 	assert.Equal(t, `user is not a player in this game`, err.Error(), `err should be appropriate`)
@@ -75,7 +75,7 @@ func Test_UnregisterUser(t *testing.T){
 }
 
 func Test_Kick(t *testing.T){
-	g := NewGame()
+	g := newGame().(*game)
 
 	assert.False(t, g.Kick(), `Kick should return false when _WAITING_FOR_OPPONENT`)
 

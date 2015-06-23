@@ -7,7 +7,7 @@ import(
 	`strconv`
 	`math/rand`
 	`github.com/0xor1/sid`
-	`github.com/0xor1/sus`
+	`github.com/0xor1/joak`
 )
 
 const(
@@ -35,20 +35,36 @@ func now() time.Time {
 	return time.Now().UTC()
 }
 
-func NewGame() *game {
-	g := &game{Version: sus.NewVersion(), State: _WAITING_FOR_OPPONENT}
+func newGame() joak.Entity {
+	g := &game{State: _WAITING_FOR_OPPONENT}
 	g.PlayerIds[0] = sid.ObjectId()
 	g.setDeleteAfter()
 	return g
 }
 
 type game struct {
-	sus.Version					`datastore:",noindex"`
+	Version			int			`datastore:",noindex"`
+	DeleteAfter		time.Time	`datastore:""`
 	PlayerIds 		[2]string	`datastore:",noindex"`
 	State	 		int			`datastore:",noindex"`
 	TurnStart		time.Time	`datastore:",noindex"`
 	PlayerChoices	[2]string	`datastore:",noindex"`
-	DeleteAfter		time.Time	`datastore:""`
+}
+
+func (g *game) GetVersion() int {
+	return g.Version
+}
+
+func (g *game) IncrementVersion() {
+	g.Version++
+}
+
+func (g *game) DecrementVersion() {
+	g.Version--
+}
+
+func (g *game) SetDeleteAfter(t time.Time) {
+	g.DeleteAfter = t
 }
 
 func (g *game) IsActive() bool {
@@ -173,7 +189,7 @@ func (g *game) restart(userId string) error {
 
 	if g.PlayerChoices[idx] != `` {
 		g.PlayerChoices[idx] = ``
-		if g.PlayerIds[1 - idx] == `` {
+		if g.PlayerIds[1 - idx] != `` && g.PlayerChoices[1 - idx] == `` {
 			dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
 			g.TurnStart = now().Add(dur)
 			g.State = _GAME_IN_PROGRESS

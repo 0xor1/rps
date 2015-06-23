@@ -54,11 +54,9 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com\0xor1\rps\game.go (73.3%)</option>
+				<option value="file0">github.com\0xor1\rps\game.go (80.9%)</option>
 				
-				<option value="file1">github.com\0xor1\rps\rps.go (76.2%)</option>
-				
-				<option value="file2">github.com\0xor1\rps\store.go (0.0%)</option>
+				<option value="file1">github.com\0xor1\rps\rps.go (80.0%)</option>
 				
 				</select>
 			</div>
@@ -81,7 +79,7 @@ import(
         `strconv`
         `math/rand`
         `github.com/0xor1/sid`
-        `github.com/0xor1/sus`
+        `github.com/0xor1/joak`
 )
 
 const(
@@ -109,21 +107,37 @@ func now() time.Time <span class="cov8" title="1">{
         return time.Now().UTC()
 }</span>
 
-func NewGame() *game <span class="cov8" title="1">{
-        g := &amp;game{Version: sus.NewVersion(), State: _WAITING_FOR_OPPONENT}
+func newGame() joak.Entity <span class="cov8" title="1">{
+        g := &amp;game{State: _WAITING_FOR_OPPONENT}
         g.PlayerIds[0] = sid.ObjectId()
         g.setDeleteAfter()
         return g
 }</span>
 
 type game struct {
-        sus.Version                                        `datastore:",noindex"`
+        Version                        int                        `datastore:",noindex"`
+        DeleteAfter                time.Time        `datastore:""`
         PlayerIds                 [2]string        `datastore:",noindex"`
         State                         int                        `datastore:",noindex"`
         TurnStart                time.Time        `datastore:",noindex"`
         PlayerChoices        [2]string        `datastore:",noindex"`
-        DeleteAfter                time.Time        `datastore:""`
 }
+
+func (g *game) GetVersion() int <span class="cov8" title="1">{
+        return g.Version
+}</span>
+
+func (g *game) IncrementVersion() <span class="cov0" title="0">{
+        g.Version++
+}</span>
+
+func (g *game) DecrementVersion() <span class="cov0" title="0">{
+        g.Version--
+}</span>
+
+func (g *game) SetDeleteAfter(t time.Time) <span class="cov0" title="0">{
+        g.DeleteAfter = t
+}</span>
 
 func (g *game) IsActive() bool <span class="cov8" title="1">{
         return g.State != _DEACTIVATED
@@ -245,17 +259,17 @@ func (g *game) restart(userId string) error <span class="cov8" title="1">{
                 return errors.New(`user is not a player in this game`)
         }</span>
 
-        <span class="cov0" title="0">if g.PlayerChoices[idx] != `` </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if g.PlayerChoices[idx] != `` </span><span class="cov8" title="1">{
                 g.PlayerChoices[idx] = ``
-                if g.PlayerIds[1 - idx] == `` </span><span class="cov0" title="0">{
+                if g.PlayerIds[1 - idx] != `` &amp;&amp; g.PlayerChoices[1 - idx] == `` </span><span class="cov8" title="1">{
                         dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
                         g.TurnStart = now().Add(dur)
                         g.State = _GAME_IN_PROGRESS
                         g.setDeleteAfter()
                 }</span>
-                <span class="cov0" title="0">return nil</span>
+                <span class="cov8" title="1">return nil</span>
         }
-        <span class="cov0" title="0">return errors.New(`player has already opted to restart`)</span>
+        <span class="cov8" title="1">return errors.New(`player has already opted to restart`)</span>
 }
 
 func (g *game) getPlayerIdx(userId string) int <span class="cov8" title="1">{
@@ -283,26 +297,40 @@ func (g *game) setDeleteAfter() <span class="cov8" title="1">{
 		<pre class="file" id="file1" style="display: none">package rps
 
 import(
+        `time`
         `errors`
-        "github.com/0xor1/oak"
+        `github.com/0xor1/oak`
+        `github.com/0xor1/joak`
+        `github.com/gorilla/mux`
+        `golang.org/x/net/context`
 )
 
 const(
-        _ACT = `act`
-        _RESTART = `restart`
-        _CHOOSE = `choose`
-        _VAL = `val`
+        _ACT                 = `act`
+        _RESTART         = `restart`
+        _CHOOSE         = `choose`
+        _VAL                 = `val`
 )
 
-func GetJoinResp (userId string, e oak.Entity) oak.Json <span class="cov8" title="1">{
-        resp := GetEntityChangeResp(userId, e)
+func RouteLocalTest(router *mux.Router)<span class="cov8" title="1">{
+        joak.RouteLocalTest(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct)
+}</span>
+
+func RouteGaeProd(router *mux.Router, ctx context.Context, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string) error <span class="cov8" title="1">{
+        deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
+        clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
+        return joak.RouteGaeProd(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey)
+}</span>
+
+func getJoinResp(userId string, e oak.Entity) oak.Json <span class="cov8" title="1">{
+        resp := getEntityChangeResp(userId, e)
         g, _ := e.(*game)
         resp[`turnLength`] = _TURN_LENGTH
         resp[`myIdx`] = g.getPlayerIdx(userId)
         return resp
 }</span>
 
-func GetEntityChangeResp (userId string, e oak.Entity) oak.Json <span class="cov8" title="1">{
+func getEntityChangeResp(userId string, e oak.Entity) oak.Json <span class="cov8" title="1">{
         g, _ := e.(*game)
         return oak.Json{
                 `state`: g.State,
@@ -310,14 +338,13 @@ func GetEntityChangeResp (userId string, e oak.Entity) oak.Json <span class="cov
         }
 }</span>
 
-func PerformAct (json oak.Json, userId string, e oak.Entity) (err error) <span class="cov8" title="1">{
+func performAct(json oak.Json, userId string, e oak.Entity) (err error) <span class="cov8" title="1">{
         g, _ := e.(*game)
         if actParam, exists := json[_ACT]; exists </span><span class="cov8" title="1">{
                 if act, ok := actParam.(string); ok </span><span class="cov8" title="1">{
                         if act == _RESTART </span><span class="cov8" title="1">{
                                 return g.restart(userId)
-                        }</span>
-                        <span class="cov8" title="1">if act == _CHOOSE </span><span class="cov0" title="0">{
+                        }</span><span class="cov8" title="1"> else if act == _CHOOSE </span><span class="cov0" title="0">{
                                 if valParam, exists := json[_VAL]; exists </span><span class="cov0" title="0">{
                                         if val, ok := valParam.(string); ok </span><span class="cov0" title="0">{
                                                 return g.makeChoice(userId, val)
@@ -327,105 +354,15 @@ func PerformAct (json oak.Json, userId string, e oak.Entity) (err error) <span c
                                 }<span class="cov0" title="0"> else {
                                         return errors.New(_VAL + ` value must be included in request`)
                                 }</span>
-                        }
-                        <span class="cov8" title="1">return errors.New(_ACT + ` must be either ` + _RESTART + ` or ` + _CHOOSE)</span>
+                        }<span class="cov8" title="1"> else {
+                                return errors.New(_ACT + ` must be either ` + _RESTART + ` or ` + _CHOOSE)
+                        }</span>
                 }<span class="cov8" title="1"> else {
                         return errors.New(_ACT + ` must be a string value`)
                 }</span>
         }<span class="cov8" title="1"> else {
                 return errors.New(_ACT + ` value must be included in request`)
         }</span>
-}</pre>
-		
-		<pre class="file" id="file2" style="display: none">package rps
-
-import(
-        `sync`
-        `time`
-        `github.com/0xor1/sid`
-        `github.com/0xor1/sus`
-        `github.com/0xor1/oak`
-        `golang.org/x/net/context`
-        `google.golang.org/appengine/datastore`
-        `github.com/qedus/nds`
-)
-
-const(
-        kind = `game`
-)
-
-var(
-        lastGaeClearOut time.Time
-        mtx sync.Mutex
-)
-
-func NewGaeGameStore() oak.EntityStore <span class="cov0" title="0">{
-        pre := func() </span><span class="cov0" title="0">{
-                myLastGaeClearOutInst := lastGaeClearOut
-                if lastGaeClearOut.IsZero() || time.Since(lastGaeClearOut).Hours() &gt;= 1 </span><span class="cov0" title="0">{
-                        mtx.Lock()
-                        if lastGaeClearOut != myLastGaeClearOutInst </span><span class="cov0" title="0">{
-                                mtx.Unlock()
-                                return
-                        }</span>
-                        <span class="cov0" title="0">lastGaeClearOut = now()
-                        mtx.Unlock()
-                        q := datastore.NewQuery(kind).Filter(`DeleteAfter &lt;=`, now()).KeysOnly()
-                        keys := []*datastore.Key{} // TODO - make this with a large len and cap and keep increasing in large chunk sizes, appending one every time is slow and inefficient
-                        for iter := q.Run(context.Background()); ; </span><span class="cov0" title="0">{
-                                key, err := iter.Next(nil)
-                                if err == datastore.Done </span><span class="cov0" title="0">{
-                                        break</span>
-                                }
-                                <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
-                                        return
-                                }</span>
-                                <span class="cov0" title="0">keys = append(keys, key)</span>
-                        }
-                        <span class="cov0" title="0">nds.DeleteMulti(context.Background(), keys)</span>
-                }
-                <span class="cov0" title="0">return</span>
-        }
-        <span class="cov0" title="0">return &amp;gameStore{preprocess: pre, inner: sus.NewGaeStore(kind, sid.Uuid, func()sus.Version</span><span class="cov0" title="0">{return NewGame()}</span>)}
-}
-
-func NewMemoryGameStore() oak.EntityStore <span class="cov0" title="0">{
-        pre := func()</span><span class="cov0" title="0">{}</span>
-        <span class="cov0" title="0">return &amp;gameStore{preprocess: pre, inner: sus.NewJsonMemoryStore(sid.Uuid, func()sus.Version</span><span class="cov0" title="0">{return NewGame()}</span>)}
-}
-
-type gameStore struct {
-        preprocess        func()
-        inner sus.Store
-}
-
-func (gs *gameStore) Create() (string, oak.Entity, error) <span class="cov0" title="0">{
-        go gs.preprocess()
-        id, v, err := gs.inner.Create()
-        var g *game
-        if err == nil &amp;&amp; v != nil </span><span class="cov0" title="0">{
-                g = v.(*game)
-        }</span>
-        <span class="cov0" title="0">return id, g, err</span>
-}
-
-func (gs *gameStore) Read(entityId string) (oak.Entity, error) <span class="cov0" title="0">{
-        go gs.preprocess()
-        v, err := gs.inner.Read(entityId)
-        var g *game
-        if err == nil &amp;&amp; v != nil </span><span class="cov0" title="0">{
-                g = v.(*game)
-        }</span>
-        <span class="cov0" title="0">return g, err</span>
-}
-
-func (gs *gameStore) Update(entityId string, entity oak.Entity) (error) <span class="cov0" title="0">{
-        go gs.preprocess()
-        var g *game
-        if entity != nil </span><span class="cov0" title="0">{
-                g = entity.(*game)
-        }</span>
-        <span class="cov0" title="0">return gs.inner.Update(entityId, g)</span>
 }</pre>
 		
 		</div>

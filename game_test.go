@@ -8,19 +8,41 @@ import(
 )
 
 func Test_NewGame(t *testing.T){
-	dur, _ := time.ParseDuration(_DELETE_AFTER)
-	delAft := now().Add(dur)
-
 	g := newGame().(*game)
 
 	assert.Equal(t, 0, g.GetVersion(), `game should have initialised version to 0`)
-	assert.Equal(t, delAft, g.DeleteAfter, `game should have initialised DeleteAfter`)
+	assert.True(t, g.DeleteAfter.IsZero(), `game should have not initialised DeleteAfter`)
 	assert.NotEqual(t, ``, g.PlayerIds[0], `game should have initialised PlayerIds[0]`)
 	assert.Equal(t, ``, g.PlayerIds[1], `game should not have initialised PlayerIds[1]`)
 	assert.Equal(t, ``, g.PlayerChoices[0], `game should not have initialised PlayerChoices[0]`)
 	assert.Equal(t, ``, g.PlayerChoices[1], `game should not have initialised PlayerChoices[1]`)
 	assert.Equal(t, _WAITING_FOR_OPPONENT, g.State, `game should have set State to _WAITING_FOR_OPPONENT`)
 	assert.True(t, g.TurnStart.IsZero(), `game should not have initialised TurnStart`)
+}
+
+func Test_Version(t *testing.T){
+	g := newGame().(*game)
+
+	assert.Equal(t, 0, g.GetVersion(), `game should start with Version 0`)
+
+	g.IncrementVersion()
+
+	assert.Equal(t, 1, g.GetVersion(), `game should have Version 1`)
+
+	g.DecrementVersion()
+
+	assert.Equal(t, 0, g.GetVersion(), `game should have Version 0`)
+}
+
+func Test_DeleteAfter(t *testing.T){
+	g := newGame().(*game)
+
+	assert.True(t, g.DeleteAfter.IsZero(), `DeleteAfter should be zero value`)
+
+	now := time.Now().UTC()
+	g.SetDeleteAfter(now)
+
+	assert.Equal(t, now, g.DeleteAfter, `DeleteAfter should be set to now`)
 }
 
 func Test_IsActive(t *testing.T){
@@ -94,6 +116,14 @@ func Test_Kick(t *testing.T){
 	assert.NotEqual(t, ``, g.PlayerChoices[0], `PlayerChoices[0] should have been set`)
 	assert.NotEqual(t, ``, g.PlayerChoices[1], `PlayerChoices[1] should have been set`)
 	assert.Equal(t, _WAITING_FOR_RESTART, g.State, `State should have been set to _WAITING_FOR_RESTART`)
+
+	//This for loop section isn't needed to test program correctness
+	//kick x2 more times to get random number generator to produce a 1 to get 100% test coverage ;)
+	for i := 0; i < 2; i++ {
+		g.State = _GAME_IN_PROGRESS
+		g.PlayerChoices = [2]string{}
+		g.Kick()
+	}
 
 	dur, _ = time.ParseDuration(`-` + strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)

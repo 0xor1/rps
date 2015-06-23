@@ -38,7 +38,6 @@ func now() time.Time {
 func newGame() joak.Entity {
 	g := &game{State: _WAITING_FOR_OPPONENT}
 	g.PlayerIds[0] = sid.ObjectId()
-	g.setDeleteAfter()
 	return g
 }
 
@@ -83,7 +82,6 @@ func (g *game) RegisterNewUser() (string, error) {
 				dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
 				g.TurnStart = now().Add(dur)
 				g.State = _GAME_IN_PROGRESS
-				g.setDeleteAfter()
 			}
 			return g.PlayerIds[i], nil
 		}
@@ -101,7 +99,6 @@ func (g *game) UnregisterUser(userId string) error {
 	var t time.Time
 	g.TurnStart = t
 	g.State = _WAITING_FOR_OPPONENT
-	g.setDeleteAfter()
 	return nil
 }
 
@@ -193,7 +190,6 @@ func (g *game) restart(userId string) error {
 			dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
 			g.TurnStart = now().Add(dur)
 			g.State = _GAME_IN_PROGRESS
-			g.setDeleteAfter()
 		}
 		return nil
 	}
@@ -214,9 +210,4 @@ func (g *game) getPlayerIdx(userId string) int {
 	}
 
 	return -1
-}
-
-func (g *game) setDeleteAfter() {
-	dur, _ := time.ParseDuration(_DELETE_AFTER)
-	g.DeleteAfter = now().Add(dur)
 }

@@ -54,9 +54,9 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com\0xor1\rps\game.go (80.9%)</option>
+				<option value="file0">github.com\0xor1\rps\game.go (100.0%)</option>
 				
-				<option value="file1">github.com\0xor1\rps\rps.go (80.0%)</option>
+				<option value="file1">github.com\0xor1\rps\rps.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -110,7 +110,6 @@ func now() time.Time <span class="cov8" title="1">{
 func newGame() joak.Entity <span class="cov8" title="1">{
         g := &amp;game{State: _WAITING_FOR_OPPONENT}
         g.PlayerIds[0] = sid.ObjectId()
-        g.setDeleteAfter()
         return g
 }</span>
 
@@ -127,15 +126,15 @@ func (g *game) GetVersion() int <span class="cov8" title="1">{
         return g.Version
 }</span>
 
-func (g *game) IncrementVersion() <span class="cov0" title="0">{
+func (g *game) IncrementVersion() <span class="cov8" title="1">{
         g.Version++
 }</span>
 
-func (g *game) DecrementVersion() <span class="cov0" title="0">{
+func (g *game) DecrementVersion() <span class="cov8" title="1">{
         g.Version--
 }</span>
 
-func (g *game) SetDeleteAfter(t time.Time) <span class="cov0" title="0">{
+func (g *game) SetDeleteAfter(t time.Time) <span class="cov8" title="1">{
         g.DeleteAfter = t
 }</span>
 
@@ -155,7 +154,6 @@ func (g *game) RegisterNewUser() (string, error) <span class="cov8" title="1">{
                                 dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
                                 g.TurnStart = now().Add(dur)
                                 g.State = _GAME_IN_PROGRESS
-                                g.setDeleteAfter()
                         }</span>
                         <span class="cov8" title="1">return g.PlayerIds[i], nil</span>
                 }
@@ -173,7 +171,6 @@ func (g *game) UnregisterUser(userId string) error <span class="cov8" title="1">
         var t time.Time
         g.TurnStart = t
         g.State = _WAITING_FOR_OPPONENT
-        g.setDeleteAfter()
         return nil</span>
 }
 
@@ -192,7 +189,7 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
                                 if g.PlayerChoices[i] == `` </span><span class="cov8" title="1">{
                                         switch r := rand.Intn(3); r </span>{
                                                 <span class="cov8" title="1">case 0: g.PlayerChoices[i] = _RCK</span>
-                                                <span class="cov0" title="0">case 1: g.PlayerChoices[i] = _PPR</span>
+                                                <span class="cov8" title="1">case 1: g.PlayerChoices[i] = _PPR</span>
                                                 <span class="cov8" title="1">case 2: g.PlayerChoices[i] = _SCR</span>
                                         }
                                 }
@@ -221,30 +218,30 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
         <span class="cov8" title="1">return ret</span>
 }
 
-func (g *game) makeChoice(userId string, choice string) error <span class="cov0" title="0">{
+func (g *game) makeChoice(userId string, choice string) error <span class="cov8" title="1">{
         g.Kick()
 
-        if g.State != _GAME_IN_PROGRESS </span><span class="cov0" title="0">{
+        if g.State != _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
                 return errors.New(`game is not in progress`)
         }</span>
 
-        <span class="cov0" title="0">idx := g.getPlayerIdx(userId)
-        if idx == -1 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">idx := g.getPlayerIdx(userId)
+        if idx == -1 </span><span class="cov8" title="1">{
                 return errors.New(`user is not a player in this game`)
         }</span>
 
-        <span class="cov0" title="0">if validInput.MatchString(choice) == false </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if validInput.MatchString(choice) == false </span><span class="cov8" title="1">{
                 return errors.New(`choice is not a valid string, must be one of: `+_RCK+`, `+_PPR+`, `+_SCR)
         }</span>
 
-        <span class="cov0" title="0">if g.PlayerChoices[idx] == `` </span><span class="cov0" title="0">{
-                if now().After(g.TurnStart) </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if g.PlayerChoices[idx] == `` </span><span class="cov8" title="1">{
+                if now().After(g.TurnStart) </span><span class="cov8" title="1">{
                         g.PlayerChoices[idx] = choice
                         return nil
                 }</span>
-                <span class="cov0" title="0">return errors.New(`turn hasn't started yet`)</span>
+                <span class="cov8" title="1">return errors.New(`turn hasn't started yet`)</span>
         }
-        <span class="cov0" title="0">return errors.New(`user choice has already been made`)</span>
+        <span class="cov8" title="1">return errors.New(`user choice has already been made`)</span>
 }
 
 func (g *game) restart(userId string) error <span class="cov8" title="1">{
@@ -265,7 +262,6 @@ func (g *game) restart(userId string) error <span class="cov8" title="1">{
                         dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
                         g.TurnStart = now().Add(dur)
                         g.State = _GAME_IN_PROGRESS
-                        g.setDeleteAfter()
                 }</span>
                 <span class="cov8" title="1">return nil</span>
         }
@@ -287,11 +283,6 @@ func (g *game) getPlayerIdx(userId string) int <span class="cov8" title="1">{
 
         <span class="cov8" title="1">return -1</span>
 }
-
-func (g *game) setDeleteAfter() <span class="cov8" title="1">{
-        dur, _ := time.ParseDuration(_DELETE_AFTER)
-        g.DeleteAfter = now().Add(dur)
-}</span>
 </pre>
 		
 		<pre class="file" id="file1" style="display: none">package rps
@@ -344,14 +335,14 @@ func performAct(json oak.Json, userId string, e oak.Entity) (err error) <span cl
                 if act, ok := actParam.(string); ok </span><span class="cov8" title="1">{
                         if act == _RESTART </span><span class="cov8" title="1">{
                                 return g.restart(userId)
-                        }</span><span class="cov8" title="1"> else if act == _CHOOSE </span><span class="cov0" title="0">{
-                                if valParam, exists := json[_VAL]; exists </span><span class="cov0" title="0">{
-                                        if val, ok := valParam.(string); ok </span><span class="cov0" title="0">{
+                        }</span><span class="cov8" title="1"> else if act == _CHOOSE </span><span class="cov8" title="1">{
+                                if valParam, exists := json[_VAL]; exists </span><span class="cov8" title="1">{
+                                        if val, ok := valParam.(string); ok </span><span class="cov8" title="1">{
                                                 return g.makeChoice(userId, val)
-                                        }</span><span class="cov0" title="0">else {
+                                        }</span><span class="cov8" title="1">else {
                                                 return errors.New(_VAL + ` must be a string value`)
                                         }</span>
-                                }<span class="cov0" title="0"> else {
+                                }<span class="cov8" title="1"> else {
                                         return errors.New(_VAL + ` value must be included in request`)
                                 }</span>
                         }<span class="cov8" title="1"> else {

@@ -50,7 +50,7 @@ func Test_performAct_without_act_param(t *testing.T){
 }
 
 func Test_performAct_with_non_string_act_param(t *testing.T){
-	json := oak.Json{`act`:true}
+	json := oak.Json{_ACT:true}
 	g := newGame()
 
 	err := performAct(json, ``, g)
@@ -59,7 +59,7 @@ func Test_performAct_with_non_string_act_param(t *testing.T){
 }
 
 func Test_performAct_with_invalid_act_param(t *testing.T){
-	json := oak.Json{`act`:`fail`}
+	json := oak.Json{_ACT:`fail`}
 	g := newGame()
 
 	err := performAct(json, ``, g)
@@ -68,7 +68,7 @@ func Test_performAct_with_invalid_act_param(t *testing.T){
 }
 
 func Test_performAct_restart_when_inappropriate_time(t *testing.T){
-	json := oak.Json{`act`:`restart`}
+	json := oak.Json{_ACT:_RESTART}
 	g := newGame()
 
 	err := performAct(json, ``, g)
@@ -77,7 +77,7 @@ func Test_performAct_restart_when_inappropriate_time(t *testing.T){
 }
 
 func Test_performAct_restart_with_invalid_user(t *testing.T){
-	json := oak.Json{`act`:`restart`}
+	json := oak.Json{_ACT:_RESTART}
 
 	g := newGame().(*game)
 	dur, _ := time.ParseDuration(`-` + strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
@@ -90,7 +90,7 @@ func Test_performAct_restart_with_invalid_user(t *testing.T){
 }
 
 func Test_performAct_restart_success(t *testing.T){
-	json := oak.Json{`act`:`restart`}
+	json := oak.Json{_ACT:_RESTART}
 
 	g := newGame().(*game)
 	dur, _ := time.ParseDuration(`-` + strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
@@ -117,5 +117,122 @@ func Test_performAct_restart_success(t *testing.T){
 	dur, _ = time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
 	assert.Equal(t, now().Add(dur), g.TurnStart, `TurnStart should have been updated`)
 	dur, _ = time.ParseDuration(_DELETE_AFTER)
-	assert.Equal(t, now().Add(dur), g.DeleteAfter, `DeleteAfter should have been updated`)
+}
+
+func Test_performAct_choose_without_val_param(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE}
+
+	g := newGame().(*game)
+	g.TurnStart = now()
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds = [2]string{`0`, `1`}
+
+	err := performAct(json, `0`, g)
+
+	assert.Equal(t, _VAL + ` value must be included in request`, err.Error(), `err should have appropriate message`)
+}
+
+func Test_performAct_choose_with_non_string_val_param(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE, _VAL:true}
+
+	g := newGame().(*game)
+	g.TurnStart = now()
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds = [2]string{`0`, `1`}
+
+	err := performAct(json, `0`, g)
+
+	assert.Equal(t, _VAL + ` must be a string value`, err.Error(), `err should have appropriate message`)
+}
+
+func Test_performAct_choose_when_game_not_in_progress(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
+
+	g := newGame().(*game)
+	g.TurnStart = now()
+	g.State = _WAITING_FOR_OPPONENT
+
+	err := performAct(json, `0`, g)
+
+	assert.Equal(t,`game is not in progress`, err.Error(), `err should have appropriate message`)
+}
+
+func Test_performAct_choose_with_invalid_player_id(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
+	dur, _ := time.ParseDuration(`-1s`)
+
+	g := newGame().(*game)
+	g.TurnStart = now().Add(dur)
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds = [2]string{`0`, `1`}
+
+	err := performAct(json, `not_a_valid_player_id`, g)
+
+	assert.Equal(t, `user is not a player in this game`, err.Error(), `err should have appropriate message`)
+}
+
+func Test_performAct_choose_with_invalid_choice(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
+	dur, _ := time.ParseDuration(`-1s`)
+
+	g := newGame().(*game)
+	g.TurnStart = now().Add(dur)
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds = [2]string{`0`, `1`}
+
+	err := performAct(json, `0`, g)
+
+	assert.Equal(t, `choice is not a valid string, must be one of: `+_RCK+`, `+_PPR+`, `+_SCR, err.Error(), `err should have appropriate message`)
+}
+
+func Test_performAct_choose_when_players_choice_has_already_been_made(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
+	dur, _ := time.ParseDuration(`-1s`)
+
+	g := newGame().(*game)
+	g.TurnStart = now().Add(dur)
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds = [2]string{`0`, `1`}
+	g.PlayerChoices = [2]string{`0`, `1`}
+
+	err := performAct(json, `0`, g)
+
+	assert.Equal(t, `user choice has already been made`, err.Error(), `err should have appropriate message`)
+}
+
+func Test_performAct_choose_when_turn_has_not_started(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
+	dur, _ := time.ParseDuration(`1s`)
+
+	g := newGame().(*game)
+	g.TurnStart = now().Add(dur)
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds = [2]string{`0`, `1`}
+
+	err := performAct(json, `0`, g)
+
+	assert.Equal(t, `turn hasn't started yet`, err.Error(), `err should have appropriate message`)
+}
+
+func Test_performAct_choose_success(t *testing.T){
+	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
+	dur, _ := time.ParseDuration(`-1s`)
+
+	g := newGame().(*game)
+	g.TurnStart = now().Add(dur)
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds = [2]string{`0`, `1`}
+
+	err := performAct(json, `0`, g)
+
+	assert.Nil(t, err, `err should be nil`)
+	assert.Equal(t, _RCK, g.PlayerChoices[0], `PlayerChoice[0] should have been set`)
+	assert.Equal(t, ``, g.PlayerChoices[1], `PlayerChoice[1] should still be unset`)
+
+	json[_VAL] = _PPR
+	err = performAct(json, `1`, g)
+
+	assert.Nil(t, err, `err should be nil`)
+	assert.Equal(t, _RCK, g.PlayerChoices[0], `PlayerChoice[0] should still be same value`)
+	assert.Equal(t, _PPR, g.PlayerChoices[1], `PlayerChoice[1] should have been set`)
 }

@@ -8,6 +8,7 @@ import(
 )
 
 func Test_NewGame(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	assert.Equal(t, 0, g.GetVersion(), `game should have initialised version to 0`)
@@ -21,6 +22,7 @@ func Test_NewGame(t *testing.T){
 }
 
 func Test_Version(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	assert.Equal(t, 0, g.GetVersion(), `game should start with Version 0`)
@@ -35,6 +37,7 @@ func Test_Version(t *testing.T){
 }
 
 func Test_DeleteAfter(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	assert.True(t, g.DeleteAfter.IsZero(), `DeleteAfter should be zero value`)
@@ -46,6 +49,7 @@ func Test_DeleteAfter(t *testing.T){
 }
 
 func Test_IsActive(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	assert.True(t, g.IsActive(), `game should start as active`)
@@ -56,6 +60,7 @@ func Test_IsActive(t *testing.T){
 }
 
 func Test_CreatedBy(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	assert.NotEqual(t, ``, g.CreatedBy(), `game should start with a non empty CreatedBy value`)
@@ -66,6 +71,7 @@ func Test_CreatedBy(t *testing.T){
 }
 
 func Test_RegisterNewUser(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 	userId, err := g.RegisterNewUser()
 
@@ -81,6 +87,7 @@ func Test_RegisterNewUser(t *testing.T){
 }
 
 func Test_UnregisterUser(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 	err := g.UnregisterUser(``)
 
@@ -97,6 +104,7 @@ func Test_UnregisterUser(t *testing.T){
 }
 
 func Test_Kick(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	assert.False(t, g.Kick(), `Kick should return false when _WAITING_FOR_OPPONENT`)
@@ -109,7 +117,7 @@ func Test_Kick(t *testing.T){
 
 	assert.False(t, g.Kick(), `Kick should return false when _GAME_IN_PROGRESS`)
 
-	dur, _ := time.ParseDuration(`-` + strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
+	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 
 	assert.True(t, g.Kick(), `Kick should return true when Turn is over`)
@@ -125,7 +133,7 @@ func Test_Kick(t *testing.T){
 		g.Kick()
 	}
 
-	dur, _ = time.ParseDuration(`-` + strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT + 1000) + _TIME_UNIT)
+	dur, _ = time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 
 	assert.True(t, g.Kick(), `Kick should return true when Restart time out is over`)

@@ -10,27 +10,36 @@ import(
 	`github.com/stretchr/testify/assert`
 )
 
+const(
+	_RCK = `rck`
+	_PPR = `ppr`
+	_SCR = `scr`
+)
+
 func Test_RouteLocal(t *testing.T){
-	RouteLocalTest(mux.NewRouter())
+	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000)
 }
 
 func Test_RouteGae(t *testing.T){
-	RouteGaeProd(mux.NewRouter(), context.Background(), ``, ``, ``, ``)
+	RouteGaeProd(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, context.Background(), ``, ``, ``, ``)
 }
 
 func Test_getJoinResp(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	json := getJoinResp(``, g)
 
-	assert.Equal(t, _TURN_LENGTH, json[`turnLength`], `turnLength should be _TURN_LENGTH`)
+	assert.Equal(t, options, json[`options`], `options should be _TURN_LENGTH`)
+	assert.Equal(t, 3000, json[`turnLength`], `turnLength should be 3000`)
 	assert.Equal(t, g.getPlayerIdx(``), json[`myIdx`], `myIdx should be -1 when just observing`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
 	assert.Equal(t, g.PlayerChoices, json[`choices`], `state should be g.State`)
-	assert.Equal(t, 4, len(json), `json should contain 4 entries`)
+	assert.Equal(t, 5, len(json), `json should contain 4 entries`)
 }
 
 func Test_getEntityChangeResp(t *testing.T){
+	standardSetup()
 	g := newGame().(*game)
 
 	json := getEntityChangeResp(``, g)
@@ -41,6 +50,7 @@ func Test_getEntityChangeResp(t *testing.T){
 }
 
 func Test_performAct_without_act_param(t *testing.T){
+	standardSetup()
 	json := oak.Json{}
 	g := newGame()
 
@@ -50,6 +60,7 @@ func Test_performAct_without_act_param(t *testing.T){
 }
 
 func Test_performAct_with_non_string_act_param(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:true}
 	g := newGame()
 
@@ -59,6 +70,7 @@ func Test_performAct_with_non_string_act_param(t *testing.T){
 }
 
 func Test_performAct_with_invalid_act_param(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:`fail`}
 	g := newGame()
 
@@ -68,6 +80,7 @@ func Test_performAct_with_invalid_act_param(t *testing.T){
 }
 
 func Test_performAct_restart_when_inappropriate_time(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_RESTART}
 	g := newGame()
 
@@ -77,10 +90,11 @@ func Test_performAct_restart_when_inappropriate_time(t *testing.T){
 }
 
 func Test_performAct_restart_with_invalid_user(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_RESTART}
 
 	g := newGame().(*game)
-	dur, _ := time.ParseDuration(`-` + strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
+	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_RESTART
 
@@ -90,10 +104,11 @@ func Test_performAct_restart_with_invalid_user(t *testing.T){
 }
 
 func Test_performAct_restart_success(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_RESTART}
 
 	g := newGame().(*game)
-	dur, _ := time.ParseDuration(`-` + strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
+	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_RESTART
 	g.PlayerIds = [2]string{`0`, `1`}
@@ -120,6 +135,7 @@ func Test_performAct_restart_success(t *testing.T){
 }
 
 func Test_performAct_choose_without_val_param(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE}
 
 	g := newGame().(*game)
@@ -133,6 +149,7 @@ func Test_performAct_choose_without_val_param(t *testing.T){
 }
 
 func Test_performAct_choose_with_non_string_val_param(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:true}
 
 	g := newGame().(*game)
@@ -146,6 +163,7 @@ func Test_performAct_choose_with_non_string_val_param(t *testing.T){
 }
 
 func Test_performAct_choose_when_game_not_in_progress(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
 
 	g := newGame().(*game)
@@ -158,6 +176,7 @@ func Test_performAct_choose_when_game_not_in_progress(t *testing.T){
 }
 
 func Test_performAct_choose_with_invalid_player_id(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
 	dur, _ := time.ParseDuration(`-1s`)
 
@@ -172,6 +191,7 @@ func Test_performAct_choose_with_invalid_player_id(t *testing.T){
 }
 
 func Test_performAct_choose_with_invalid_choice(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
 	dur, _ := time.ParseDuration(`-1s`)
 
@@ -186,6 +206,7 @@ func Test_performAct_choose_with_invalid_choice(t *testing.T){
 }
 
 func Test_performAct_choose_when_players_choice_has_already_been_made(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
 	dur, _ := time.ParseDuration(`-1s`)
 
@@ -201,6 +222,7 @@ func Test_performAct_choose_when_players_choice_has_already_been_made(t *testing
 }
 
 func Test_performAct_choose_when_turn_has_not_started(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
 	dur, _ := time.ParseDuration(`1s`)
 
@@ -215,6 +237,7 @@ func Test_performAct_choose_when_turn_has_not_started(t *testing.T){
 }
 
 func Test_performAct_choose_success(t *testing.T){
+	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
 	dur, _ := time.ParseDuration(`-1s`)
 
@@ -235,4 +258,8 @@ func Test_performAct_choose_success(t *testing.T){
 	assert.Nil(t, err, `err should be nil`)
 	assert.Equal(t, _RCK, g.PlayerChoices[0], `PlayerChoice[0] should still be same value`)
 	assert.Equal(t, _PPR, g.PlayerChoices[1], `PlayerChoice[1] should have been set`)
+}
+
+func standardSetup(){
+	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000)
 }

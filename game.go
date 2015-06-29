@@ -2,6 +2,7 @@ package rps
 
 import(
 	`time`
+	`strings`
 	`errors`
 	`regexp`
 	`strconv`
@@ -11,10 +12,6 @@ import(
 )
 
 const(
-	_RCK 						= `rck`
-	_PPR 						= `ppr`
-	_SCR 						= `scr`
-	_TURN_LENGTH 				= 3000
 	_TURN_LENGTH_ERROR_MARGIN	= 500
 	_START_TIME_BUF				= 5000
 	_RESTART_TIME_LIMIT			= 10000
@@ -28,7 +25,9 @@ const(
 )
 
 var(
-	validInput = regexp.MustCompile(`^(`+_RCK+`|`+_PPR+`|`+_SCR+`)$`)
+	validInput *regexp.Regexp
+	options []string
+	turnLength int
 )
 
 func now() time.Time {
@@ -109,24 +108,20 @@ func (g *game) Kick() bool {
 
 	ret := false
 	if g.State == _GAME_IN_PROGRESS {
-		dur, _ := time.ParseDuration(strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
+		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
 		if now().After(g.TurnStart.Add(dur)) {
 			g.State = _WAITING_FOR_RESTART
 			ret = true
 			for i := 0; i < 2; i++ {
 				if g.PlayerChoices[i] == `` {
-					switch r := rand.Intn(3); r {
-						case 0: g.PlayerChoices[i] = _RCK
-						case 1: g.PlayerChoices[i] = _PPR
-						case 2: g.PlayerChoices[i] = _SCR
-					}
+					g.PlayerChoices[i] = options[rand.Intn(len(options))]
 				}
 			}
 		}
 	}
 
 	if g.State == _WAITING_FOR_RESTART {
-		dur, _ := time.ParseDuration(strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT) + _TIME_UNIT)
+		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT) + _TIME_UNIT)
 		if now().After(g.TurnStart.Add(dur)) {
 			ret = true
 			if (g.PlayerChoices[0] == `` || g.PlayerChoices[1] == ``) && !(g.PlayerChoices[0] == `` && g.PlayerChoices[1] == ``) {
@@ -159,7 +154,7 @@ func (g *game) makeChoice(userId string, choice string) error {
 	}
 
 	if validInput.MatchString(choice) == false {
-		return errors.New(`choice is not a valid string, must be one of: `+_RCK+`, `+_PPR+`, `+_SCR)
+		return errors.New(`choice is not a valid string, must be one of: ` + strings.Join(options, `, `))
 	}
 
 	if g.PlayerChoices[idx] == `` {

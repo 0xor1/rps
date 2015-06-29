@@ -3,6 +3,8 @@ package rps
 import(
 	`time`
 	`errors`
+	`regexp`
+	`strings`
 	`github.com/0xor1/oak`
 	`github.com/0xor1/joak`
 	`github.com/gorilla/mux`
@@ -16,20 +18,29 @@ const(
 	_VAL 		= `val`
 )
 
-func RouteLocalTest(router *mux.Router){
+func RouteLocalTest(router *mux.Router, ops []string, millisecsPerChoice int){
+	initStaticProperties(ops, millisecsPerChoice)
 	joak.RouteLocalTest(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }
 
-func RouteGaeProd(router *mux.Router, ctx context.Context, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string) error {
+func RouteGaeProd(router *mux.Router, options []string, millisecsPerChoice int, ctx context.Context, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string) error {
+	initStaticProperties(options, millisecsPerChoice)
 	deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
 	clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
 	return joak.RouteGaeProd(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey)
 }
 
+func initStaticProperties(ops []string, millisecsPerChoice int){
+	options = ops
+	turnLength = millisecsPerChoice * len(options)
+	validInput = regexp.MustCompile(`^(`+strings.Join(options, `|`)+`)$`)
+}
+
 func getJoinResp(userId string, e oak.Entity) oak.Json {
 	resp := getEntityChangeResp(userId, e)
 	g, _ := e.(*game)
-	resp[`turnLength`] = _TURN_LENGTH
+	resp[`options`] = options
+	resp[`turnLength`] = turnLength
 	resp[`myIdx`] = g.getPlayerIdx(userId)
 	return resp
 }

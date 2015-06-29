@@ -54,9 +54,9 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com\0xor1\rps\game.go (100.0%)</option>
+				<option value="file0">bitbucket.org\0xor1\rps\game.go (100.0%)</option>
 				
-				<option value="file1">github.com\0xor1\rps\rps.go (100.0%)</option>
+				<option value="file1">bitbucket.org\0xor1\rps\rps.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -74,6 +74,7 @@
 
 import(
         `time`
+        `strings`
         `errors`
         `regexp`
         `strconv`
@@ -83,10 +84,6 @@ import(
 )
 
 const(
-        _RCK                                                 = `rck`
-        _PPR                                                 = `ppr`
-        _SCR                                                 = `scr`
-        _TURN_LENGTH                                 = 3000
         _TURN_LENGTH_ERROR_MARGIN        = 500
         _START_TIME_BUF                                = 5000
         _RESTART_TIME_LIMIT                        = 10000
@@ -100,7 +97,9 @@ const(
 )
 
 var(
-        validInput = regexp.MustCompile(`^(`+_RCK+`|`+_PPR+`|`+_SCR+`)$`)
+        validInput *regexp.Regexp
+        options []string
+        turnLength int
 )
 
 func now() time.Time <span class="cov8" title="1">{
@@ -181,24 +180,20 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
 
         <span class="cov8" title="1">ret := false
         if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
-                dur, _ := time.ParseDuration(strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
+                dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
                 if now().After(g.TurnStart.Add(dur)) </span><span class="cov8" title="1">{
                         g.State = _WAITING_FOR_RESTART
                         ret = true
                         for i := 0; i &lt; 2; i++ </span><span class="cov8" title="1">{
                                 if g.PlayerChoices[i] == `` </span><span class="cov8" title="1">{
-                                        switch r := rand.Intn(3); r </span>{
-                                                <span class="cov8" title="1">case 0: g.PlayerChoices[i] = _RCK</span>
-                                                <span class="cov8" title="1">case 1: g.PlayerChoices[i] = _PPR</span>
-                                                <span class="cov8" title="1">case 2: g.PlayerChoices[i] = _SCR</span>
-                                        }
-                                }
+                                        g.PlayerChoices[i] = options[rand.Intn(len(options))]
+                                }</span>
                         }
                 }
         }
 
         <span class="cov8" title="1">if g.State == _WAITING_FOR_RESTART </span><span class="cov8" title="1">{
-                dur, _ := time.ParseDuration(strconv.Itoa(_TURN_LENGTH + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT) + _TIME_UNIT)
+                dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT) + _TIME_UNIT)
                 if now().After(g.TurnStart.Add(dur)) </span><span class="cov8" title="1">{
                         ret = true
                         if (g.PlayerChoices[0] == `` || g.PlayerChoices[1] == ``) &amp;&amp; !(g.PlayerChoices[0] == `` &amp;&amp; g.PlayerChoices[1] == ``) </span><span class="cov8" title="1">{
@@ -231,7 +226,7 @@ func (g *game) makeChoice(userId string, choice string) error <span class="cov8"
         }</span>
 
         <span class="cov8" title="1">if validInput.MatchString(choice) == false </span><span class="cov8" title="1">{
-                return errors.New(`choice is not a valid string, must be one of: `+_RCK+`, `+_PPR+`, `+_SCR)
+                return errors.New(`choice is not a valid string, must be one of: ` + strings.Join(options, `, `))
         }</span>
 
         <span class="cov8" title="1">if g.PlayerChoices[idx] == `` </span><span class="cov8" title="1">{
@@ -290,6 +285,8 @@ func (g *game) getPlayerIdx(userId string) int <span class="cov8" title="1">{
 import(
         `time`
         `errors`
+        `regexp`
+        `strings`
         `github.com/0xor1/oak`
         `github.com/0xor1/joak`
         `github.com/gorilla/mux`
@@ -303,20 +300,29 @@ const(
         _VAL                 = `val`
 )
 
-func RouteLocalTest(router *mux.Router)<span class="cov8" title="1">{
+func RouteLocalTest(router *mux.Router, ops []string, millisecsPerChoice int)<span class="cov8" title="1">{
+        initStaticProperties(ops, millisecsPerChoice)
         joak.RouteLocalTest(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }</span>
 
-func RouteGaeProd(router *mux.Router, ctx context.Context, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string) error <span class="cov8" title="1">{
+func RouteGaeProd(router *mux.Router, options []string, millisecsPerChoice int, ctx context.Context, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string) error <span class="cov8" title="1">{
+        initStaticProperties(options, millisecsPerChoice)
         deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
         clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
         return joak.RouteGaeProd(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey)
 }</span>
 
+func initStaticProperties(ops []string, millisecsPerChoice int)<span class="cov8" title="1">{
+        options = ops
+        turnLength = millisecsPerChoice * len(options)
+        validInput = regexp.MustCompile(`^(`+strings.Join(options, `|`)+`)$`)
+}</span>
+
 func getJoinResp(userId string, e oak.Entity) oak.Json <span class="cov8" title="1">{
         resp := getEntityChangeResp(userId, e)
         g, _ := e.(*game)
-        resp[`turnLength`] = _TURN_LENGTH
+        resp[`options`] = options
+        resp[`turnLength`] = turnLength
         resp[`myIdx`] = g.getPlayerIdx(userId)
         return resp
 }</span>

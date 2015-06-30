@@ -49,11 +49,20 @@ func getJoinResp(userId string, e oak.Entity) oak.Json {
 
 func getEntityChangeResp(userId string, e oak.Entity) oak.Json {
 	g, _ := e.(*game)
-	return oak.Json{
+	json := oak.Json{
 		`turnStart`: g.TurnStart,
 		`state`: g.State,
 		`choices`: g.PlayerChoices,
 	}
+	if g.State == _GAME_IN_PROGRESS {
+		choices := [2]string{}
+		idx := g.getPlayerIdx(userId)
+		if idx != -1 {
+			choices[idx] = g.PlayerChoices[idx]
+		}
+		json[`choices`] = choices
+	}
+	return json
 }
 
 func performAct(json oak.Json, userId string, e oak.Entity) (err error) {

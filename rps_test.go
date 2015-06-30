@@ -17,11 +17,11 @@ const(
 )
 
 func Test_RouteLocal(t *testing.T){
-	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000)
+	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, ``, ``, ``, ``)
 }
 
 func Test_RouteGae(t *testing.T){
-	RouteGaeProd(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, context.Background(), ``, ``, ``, ``)
+	RouteGaeProd(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, ``, ``, ``, ``, context.Background())
 }
 
 func Test_getJoinResp(t *testing.T){
@@ -265,5 +265,5 @@ func Test_performAct_choose_success(t *testing.T){
 }
 
 func standardSetup(){
-	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000)
+	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, ``, ``, ``, ``)
 }

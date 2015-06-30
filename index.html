@@ -300,16 +300,16 @@ const(
         _VAL                 = `val`
 )
 
-func RouteLocalTest(router *mux.Router, ops []string, millisecsPerChoice int)<span class="cov8" title="1">{
+func RouteLocalTest(router *mux.Router, ops []string, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string)<span class="cov8" title="1">{
         initStaticProperties(ops, millisecsPerChoice)
-        joak.RouteLocalTest(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct)
+        joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }</span>
 
-func RouteGaeProd(router *mux.Router, options []string, millisecsPerChoice int, ctx context.Context, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string) error <span class="cov8" title="1">{
+func RouteGaeProd(router *mux.Router, options []string, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctx context.Context) error <span class="cov8" title="1">{
         initStaticProperties(options, millisecsPerChoice)
         deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
         clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
-        return joak.RouteGaeProd(router, newGame, 300, `rps`, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey)
+        return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx)
 }</span>
 
 func initStaticProperties(ops []string, millisecsPerChoice int)<span class="cov8" title="1">{

@@ -99,6 +99,7 @@ const(
 var(
         validInput *regexp.Regexp
         options []string
+        resultHalfMatrix [][]int
         turnLength int
 )
 
@@ -300,20 +301,21 @@ const(
         _VAL                 = `val`
 )
 
-func RouteLocalTest(router *mux.Router, ops []string, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string)<span class="cov8" title="1">{
-        initStaticProperties(ops, millisecsPerChoice)
+func RouteLocalTest(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string)<span class="cov8" title="1">{
+        initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
         joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }</span>
 
-func RouteGaeProd(router *mux.Router, options []string, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctx context.Context) error <span class="cov8" title="1">{
-        initStaticProperties(options, millisecsPerChoice)
+func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctx context.Context) error <span class="cov8" title="1">{
+        initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
         deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
         clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
         return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx)
 }</span>
 
-func initStaticProperties(ops []string, millisecsPerChoice int)<span class="cov8" title="1">{
+func initStaticProperties(ops []string, rhm [][]int, millisecsPerChoice int)<span class="cov8" title="1">{
         options = ops
+        resultHalfMatrix = rhm
         turnLength = millisecsPerChoice * len(options)
         validInput = regexp.MustCompile(`^(`+strings.Join(options, `|`)+`)$`)
 }</span>
@@ -322,6 +324,7 @@ func getJoinResp(userId string, e oak.Entity) oak.Json <span class="cov8" title=
         resp := getEntityChangeResp(userId, e)
         g, _ := e.(*game)
         resp[`options`] = options
+        resp[`resultHalfMatrix`] = resultHalfMatrix
         resp[`turnLength`] = turnLength
         resp[`myIdx`] = g.getPlayerIdx(userId)
         return resp

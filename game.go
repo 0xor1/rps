@@ -27,6 +27,7 @@ const(
 var(
 	validInput *regexp.Regexp
 	options []string
+	resultHalfMatrix [][]int
 	turnLength int
 )
 

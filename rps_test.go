@@ -17,11 +17,11 @@ const(
 )
 
 func Test_RouteLocal(t *testing.T){
-	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, ``, ``, ``, ``)
+	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, [][]int{[]int{1}, []int{-1, 1}}, 1000, ``, ``, ``, ``)
 }
 
 func Test_RouteGae(t *testing.T){
-	RouteGaeProd(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, ``, ``, ``, ``, context.Background())
+	RouteGaeProd(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, [][]int{[]int{1}, []int{-1, 1}}, 1000, ``, ``, ``, ``, context.Background())
 }
 
 func Test_getJoinResp(t *testing.T){
@@ -31,13 +31,14 @@ func Test_getJoinResp(t *testing.T){
 	json := getJoinResp(``, g)
 
 	var zeroTime time.Time
-	assert.Equal(t, options, json[`options`], `options should be _TURN_LENGTH`)
+	assert.Equal(t, options, json[`options`], `options should be equal to options`)
+	assert.Equal(t, resultHalfMatrix, json[`resultHalfMatrix`], `resultHalfMatrix should be equal to resultHalfMatrix`)
 	assert.Equal(t, 3000, json[`turnLength`], `turnLength should be 3000`)
 	assert.Equal(t, g.getPlayerIdx(``), json[`myIdx`], `myIdx should be -1 when just observing`)
 	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
 	assert.Equal(t, g.PlayerChoices, json[`choices`], `state should be g.State`)
-	assert.Equal(t, 6, len(json), `json should contain 4 entries`)
+	assert.Equal(t, 7, len(json), `json should contain 7 entries`)
 }
 
 func Test_getEntityChangeResp(t *testing.T){
@@ -265,5 +266,5 @@ func Test_performAct_choose_success(t *testing.T){
 }
 
 func standardSetup(){
-	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, 1000, ``, ``, ``, ``)
+	RouteLocalTest(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, [][]int{[]int{1}, []int{-1, 1}}, 1000, ``, ``, ``, ``)
 }

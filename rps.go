@@ -18,20 +18,21 @@ const(
 	_VAL 		= `val`
 )
 
-func RouteLocalTest(router *mux.Router, ops []string, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string){
-	initStaticProperties(ops, millisecsPerChoice)
+func RouteLocalTest(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string){
+	initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
 	joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }
 
-func RouteGaeProd(router *mux.Router, options []string, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctx context.Context) error {
-	initStaticProperties(options, millisecsPerChoice)
+func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctx context.Context) error {
+	initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
 	deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
 	clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
 	return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx)
 }
 
-func initStaticProperties(ops []string, millisecsPerChoice int){
+func initStaticProperties(ops []string, rhm [][]int, millisecsPerChoice int){
 	options = ops
+	resultHalfMatrix = rhm
 	turnLength = millisecsPerChoice * len(options)
 	validInput = regexp.MustCompile(`^(`+strings.Join(options, `|`)+`)$`)
 }
@@ -40,6 +41,7 @@ func getJoinResp(userId string, e oak.Entity) oak.Json {
 	resp := getEntityChangeResp(userId, e)
 	g, _ := e.(*game)
 	resp[`options`] = options
+	resp[`resultHalfMatrix`] = resultHalfMatrix
 	resp[`turnLength`] = turnLength
 	resp[`myIdx`] = g.getPlayerIdx(userId)
 	return resp

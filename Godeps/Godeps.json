@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/0xor1/rps",
+	"ImportPath": "bitbucket.org/0xor1/rps",
 	"GoVersion": "go1.4",
 	"Deps": [
 		{
@@ -13,7 +13,7 @@
 		},
 		{
 			"ImportPath": "github.com/0xor1/joak",
-			"Rev": "5246c43d43819b58e66fb2892f6d97ccd5f9d48a"
+			"Rev": "762c9c88d6fc7a657dbfd24108bf53f26791a813"
 		},
 		{
 			"ImportPath": "github.com/0xor1/oak",

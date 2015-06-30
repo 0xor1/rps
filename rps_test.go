@@ -30,12 +30,14 @@ func Test_getJoinResp(t *testing.T){
 
 	json := getJoinResp(``, g)
 
+	var zeroTime time.Time
 	assert.Equal(t, options, json[`options`], `options should be _TURN_LENGTH`)
 	assert.Equal(t, 3000, json[`turnLength`], `turnLength should be 3000`)
 	assert.Equal(t, g.getPlayerIdx(``), json[`myIdx`], `myIdx should be -1 when just observing`)
+	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
 	assert.Equal(t, g.PlayerChoices, json[`choices`], `state should be g.State`)
-	assert.Equal(t, 5, len(json), `json should contain 4 entries`)
+	assert.Equal(t, 6, len(json), `json should contain 4 entries`)
 }
 
 func Test_getEntityChangeResp(t *testing.T){
@@ -44,9 +46,11 @@ func Test_getEntityChangeResp(t *testing.T){
 
 	json := getEntityChangeResp(``, g)
 
+	var zeroTime time.Time
+	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
 	assert.Equal(t, g.PlayerChoices, json[`choices`], `state should be g.State`)
-	assert.Equal(t, 2, len(json), `json should contain 2 entries`)
+	assert.Equal(t, 3, len(json), `json should contain 2 entries`)
 }
 
 func Test_performAct_without_act_param(t *testing.T){

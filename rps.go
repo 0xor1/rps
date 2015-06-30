@@ -48,6 +48,7 @@ func getJoinResp(userId string, e oak.Entity) oak.Json {
 func getEntityChangeResp(userId string, e oak.Entity) oak.Json {
 	g, _ := e.(*game)
 	return oak.Json{
+		`turnStart`: g.TurnStart,
 		`state`: g.State,
 		`choices`: g.PlayerChoices,
 	}

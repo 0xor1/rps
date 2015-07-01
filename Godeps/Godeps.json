@@ -13,11 +13,11 @@
 		},
 		{
 			"ImportPath": "github.com/0xor1/joak",
-			"Rev": "762c9c88d6fc7a657dbfd24108bf53f26791a813"
+			"Rev": "d899a881dbbdc39bd37842661a03f737bda9c8de"
 		},
 		{
 			"ImportPath": "github.com/0xor1/oak",
-			"Rev": "08ed4a11edc20a32b0f72cd893c22726909b2e7f"
+			"Rev": "ee5077378c3d31bdf4d00375fa35f7ffd591e639"
 		},
 		{
 			"ImportPath": "github.com/0xor1/sid",

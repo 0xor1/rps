@@ -56,7 +56,7 @@
 				
 				<option value="file0">bitbucket.org\0xor1\rps\game.go (100.0%)</option>
 				
-				<option value="file1">bitbucket.org\0xor1\rps\rps.go (87.5%)</option>
+				<option value="file1">bitbucket.org\0xor1\rps\rps.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -336,13 +336,13 @@ func getEntityChangeResp(userId string, e oak.Entity) oak.Json <span class="cov8
                 `state`: g.State,
                 `choices`: g.PlayerChoices,
         }
-        if g.State == _GAME_IN_PROGRESS </span><span class="cov0" title="0">{
+        if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
                 choices := [2]string{}
                 idx := g.getPlayerIdx(userId)
-                if idx != -1 </span><span class="cov0" title="0">{
+                if idx != -1 </span><span class="cov8" title="1">{
                         choices[idx] = g.PlayerChoices[idx]
                 }</span>
-                <span class="cov0" title="0">json[`choices`] = choices</span>
+                <span class="cov8" title="1">json[`choices`] = choices</span>
         }
         <span class="cov8" title="1">return json</span>
 }

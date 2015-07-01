@@ -6,7 +6,6 @@ import(
 	`testing`
 	`github.com/0xor1/oak`
 	`github.com/gorilla/mux`
-	`golang.org/x/net/context`
 	`github.com/stretchr/testify/assert`
 )
 
@@ -21,7 +20,7 @@ func Test_RouteLocal(t *testing.T){
 }
 
 func Test_RouteGae(t *testing.T){
-	RouteGaeProd(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, [][]int{[]int{1}, []int{-1, 1}}, 1000, ``, ``, ``, ``, context.Background())
+	RouteGaeProd(mux.NewRouter(), []string{_RCK, _PPR, _SCR}, [][]int{[]int{1}, []int{-1, 1}}, 1000, ``, ``, ``, ``, nil)
 }
 
 func Test_getJoinResp(t *testing.T){

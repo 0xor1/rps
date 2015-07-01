@@ -8,7 +8,6 @@ import(
 	`github.com/0xor1/oak`
 	`github.com/0xor1/joak`
 	`github.com/gorilla/mux`
-	`golang.org/x/net/context`
 )
 
 const(
@@ -23,11 +22,11 @@ func RouteLocalTest(router *mux.Router, options []string, resultHalfMatrix [][]i
 	joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }
 
-func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctx context.Context) error {
+func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctxFactory joak.ContextFactory) error {
 	initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
 	deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
 	clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
-	return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctx)
+	return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctxFactory)
 }
 
 func initStaticProperties(ops []string, rhm [][]int, millisecsPerChoice int){

@@ -89,6 +89,7 @@ const(
         _RESTART_TIME_LIMIT                        = 10000
         _TIME_UNIT                                        = `ms`
         _DELETE_AFTER                                = `10m`
+        _MAX_TURNS                                        = 101
         //STATE
         _WAITING_FOR_OPPONENT                = 0
         _GAME_IN_PROGRESS                         = 1
@@ -110,6 +111,7 @@ func now() time.Time <span class="cov8" title="1">{
 func newGame() joak.Entity <span class="cov8" title="1">{
         g := &amp;game{State: _WAITING_FOR_OPPONENT}
         g.PlayerIds[0] = sid.ObjectId()
+        g.PastChoices = [][2]string{}
         return g
 }</span>
 
@@ -119,7 +121,8 @@ type game struct {
         PlayerIds                 [2]string        `datastore:",noindex"`
         State                         int                        `datastore:",noindex"`
         TurnStart                time.Time        `datastore:",noindex"`
-        PlayerChoices        [2]string        `datastore:",noindex"`
+        PastChoices         [][2]string        `datastore:",noindex"`
+        CurrentChoices         [2]string        `datastore:",noindex"`
 }
 
 func (g *game) GetVersion() int <span class="cov8" title="1">{
@@ -147,32 +150,19 @@ func (g *game) CreatedBy() string <span class="cov8" title="1">{
 }</span>
 
 func (g *game) RegisterNewUser() (string, error) <span class="cov8" title="1">{
-        for i := 0; i &lt; 2 ; i++ </span><span class="cov8" title="1">{
-                if g.PlayerIds[i] == `` </span><span class="cov8" title="1">{
-                        g.PlayerIds[i] = sid.ObjectId()
-                        if g.PlayerIds[0] != `` &amp;&amp; g.PlayerIds[1] != `` </span><span class="cov8" title="1">{
-                                dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
-                                g.TurnStart = now().Add(dur)
-                                g.State = _GAME_IN_PROGRESS
-                        }</span>
-                        <span class="cov8" title="1">return g.PlayerIds[i], nil</span>
-                }
-        }
+        if g.PlayerIds[1] == `` </span><span class="cov8" title="1">{
+                g.PlayerIds[1] = sid.ObjectId()
+                dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
+                g.TurnStart = now().Add(dur)
+                g.State = _GAME_IN_PROGRESS
+                return g.PlayerIds[1], nil
+        }</span>
         <span class="cov8" title="1">return ``, errors.New(`all player slots taken`)</span>
 }
 
 func (g *game) UnregisterUser(userId string) error <span class="cov8" title="1">{
-        idx := g.getPlayerIdx(userId)
-        if idx == -1 </span><span class="cov8" title="1">{
-                return errors.New(`user is not a player in this game`)
-        }</span>
-
-        <span class="cov8" title="1">g.PlayerIds[idx] = ``
-        var t time.Time
-        g.TurnStart = t
-        g.State = _WAITING_FOR_OPPONENT
-        return nil</span>
-}
+        return errors.New(`leaving the game is not permitted, simply choose not to restart after the next turn is over instead`)
+}</span>
 
 func (g *game) Kick() bool <span class="cov8" title="1">{
         if g.State == _WAITING_FOR_OPPONENT || g.State == _DEACTIVATED </span><span class="cov8" title="1">{
@@ -186,29 +176,25 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
                         g.State = _WAITING_FOR_RESTART
                         ret = true
                         for i := 0; i &lt; 2; i++ </span><span class="cov8" title="1">{
-                                if g.PlayerChoices[i] == `` </span><span class="cov8" title="1">{
-                                        g.PlayerChoices[i] = options[rand.Intn(len(options))]
+                                if g.CurrentChoices[i] == `` </span><span class="cov8" title="1">{
+                                        g.CurrentChoices[i] = options[rand.Intn(len(options))]
                                 }</span>
                         }
+                        <span class="cov8" title="1">g.PastChoices = append(g.PastChoices, g.CurrentChoices)
+                        if len(g.PastChoices) &gt;= _MAX_TURNS </span><span class="cov8" title="1">{
+                                g.State = _DEACTIVATED
+                        }</span><span class="cov8" title="1"> else {
+                                g.State = _WAITING_FOR_RESTART
+                        }</span>
                 }
         }
 
         <span class="cov8" title="1">if g.State == _WAITING_FOR_RESTART </span><span class="cov8" title="1">{
                 dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT) + _TIME_UNIT)
                 if now().After(g.TurnStart.Add(dur)) </span><span class="cov8" title="1">{
+                        g.State = _DEACTIVATED
                         ret = true
-                        if (g.PlayerChoices[0] == `` || g.PlayerChoices[1] == ``) &amp;&amp; !(g.PlayerChoices[0] == `` &amp;&amp; g.PlayerChoices[1] == ``) </span><span class="cov8" title="1">{
-                                for i := 0; i &lt; 2; i++ </span><span class="cov8" title="1">{
-                                        if g.PlayerChoices[i] != `` </span><span class="cov8" title="1">{
-                                                g.PlayerChoices[i] = ``
-                                                g.UnregisterUser(g.PlayerIds[i])
-                                                break</span>
-                                        }
-                                }
-                        }<span class="cov8" title="1"> else {
-                                g.State = _DEACTIVATED
-                        }</span>
-                }
+                }</span>
         }
 
         <span class="cov8" title="1">return ret</span>
@@ -230,11 +216,19 @@ func (g *game) makeChoice(userId string, choice string) error <span class="cov8"
                 return errors.New(`choice is not a valid string, must be one of: ` + strings.Join(options, `, `))
         }</span>
 
-        <span class="cov8" title="1">if g.PlayerChoices[idx] == `` </span><span class="cov8" title="1">{
+        <span class="cov8" title="1">if g.CurrentChoices[idx] == `` </span><span class="cov8" title="1">{
                 if now().After(g.TurnStart) </span><span class="cov8" title="1">{
-                        g.PlayerChoices[idx] = choice
-                        return nil
-                }</span>
+                        g.CurrentChoices[idx] = choice
+                        if g.CurrentChoices[0] != `` &amp;&amp; g.CurrentChoices[1] != ``</span><span class="cov8" title="1">{
+                                g.PastChoices = append(g.PastChoices, g.CurrentChoices)
+                                if len(g.PastChoices) &gt;= _MAX_TURNS </span><span class="cov8" title="1">{
+                                        g.State = _DEACTIVATED
+                                }</span><span class="cov8" title="1"> else {
+                                        g.State = _WAITING_FOR_RESTART
+                                }</span>
+                        }
+                        <span class="cov8" title="1">return nil</span>
+                }
                 <span class="cov8" title="1">return errors.New(`turn hasn't started yet`)</span>
         }
         <span class="cov8" title="1">return errors.New(`user choice has already been made`)</span>
@@ -252,9 +246,9 @@ func (g *game) restart(userId string) error <span class="cov8" title="1">{
                 return errors.New(`user is not a player in this game`)
         }</span>
 
-        <span class="cov8" title="1">if g.PlayerChoices[idx] != `` </span><span class="cov8" title="1">{
-                g.PlayerChoices[idx] = ``
-                if g.PlayerIds[1 - idx] != `` &amp;&amp; g.PlayerChoices[1 - idx] == `` </span><span class="cov8" title="1">{
+        <span class="cov8" title="1">if g.CurrentChoices[idx] != `` </span><span class="cov8" title="1">{
+                g.CurrentChoices[idx] = ``
+                if g.CurrentChoices[0] == `` &amp;&amp; g.CurrentChoices[1] == `` </span><span class="cov8" title="1">{
                         dur, _ := time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
                         g.TurnStart = now().Add(dur)
                         g.State = _GAME_IN_PROGRESS
@@ -323,8 +317,11 @@ func getJoinResp(userId string, e oak.Entity) oak.Json <span class="cov8" title=
         resp := getEntityChangeResp(userId, e)
         g, _ := e.(*game)
         resp[`options`] = options
+        resp[`pastChoices`] = g.PastChoices
         resp[`resultHalfMatrix`] = resultHalfMatrix
         resp[`turnLength`] = turnLength
+        resp[`restartTimeLimit`] = _RESTART_TIME_LIMIT
+        resp[`maxTurns`] = _MAX_TURNS
         resp[`myIdx`] = g.getPlayerIdx(userId)
         return resp
 }</span>
@@ -334,15 +331,13 @@ func getEntityChangeResp(userId string, e oak.Entity) oak.Json <span class="cov8
         json := oak.Json{
                 `turnStart`: g.TurnStart,
                 `state`: g.State,
-                `choices`: g.PlayerChoices,
+                `choices`: g.CurrentChoices,
         }
         if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
-                choices := [2]string{}
                 idx := g.getPlayerIdx(userId)
-                if idx != -1 </span><span class="cov8" title="1">{
-                        choices[idx] = g.PlayerChoices[idx]
+                if idx == -1 || g.CurrentChoices[idx] == `` </span><span class="cov8" title="1">{
+                        json[`choices`] = [2]string{}
                 }</span>
-                <span class="cov8" title="1">json[`choices`] = choices</span>
         }
         <span class="cov8" title="1">return json</span>
 }

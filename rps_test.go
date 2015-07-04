@@ -36,8 +36,11 @@ func Test_getJoinResp(t *testing.T){
 	assert.Equal(t, g.getPlayerIdx(``), json[`myIdx`], `myIdx should be -1 when just observing`)
 	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
-	assert.Equal(t, g.PlayerChoices, json[`choices`], `state should be g.State`)
-	assert.Equal(t, 7, len(json), `json should contain 7 entries`)
+	assert.Equal(t, g.CurrentChoices, json[`choices`], `choices should be g.CurrentChoices`)
+	assert.Equal(t, g.PastChoices, json[`pastChoices`], `pastChoices should be g.PastChoices`)
+	assert.Equal(t, _RESTART_TIME_LIMIT, json[`restartTimeLimit`], `restartTimeLimit should be _RESTART_TIME_LIMIT`)
+	assert.Equal(t, _MAX_TURNS, json[`maxTurns`], `maxTurns should be _MAX_TURNS`)
+	assert.Equal(t, 10, len(json), `json should contain 10 entries`)
 }
 
 func Test_getEntityChangeResp(t *testing.T){
@@ -49,8 +52,8 @@ func Test_getEntityChangeResp(t *testing.T){
 	var zeroTime time.Time
 	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
-	assert.Equal(t, g.PlayerChoices, json[`choices`], `choices should be g.PlayerChoices`)
-	assert.Equal(t, 3, len(json), `json should contain 2 entries`)
+	assert.Equal(t, g.CurrentChoices, json[`choices`], `choices should be g.CurrentChoices`)
+	assert.Equal(t, 3, len(json), `json should contain 3 entries`)
 }
 
 func Test_getEntityChangeResp_when_one_user_has_entered_a_choice_and_tother_hasnt(t *testing.T){
@@ -58,7 +61,7 @@ func Test_getEntityChangeResp_when_one_user_has_entered_a_choice_and_tother_hasn
 	g := newGame().(*game)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = [2]string{`1`, `2`}
-	g.PlayerChoices = [2]string{`rck`, ``}
+	g.CurrentChoices = [2]string{`rck`, ``}
 
 	json := getEntityChangeResp(`1`, g)
 
@@ -132,12 +135,12 @@ func Test_performAct_restart_success(t *testing.T){
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_RESTART
 	g.PlayerIds = [2]string{`0`, `1`}
-	g.PlayerChoices = [2]string{`0`, `1`}
+	g.CurrentChoices = [2]string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
 	assert.Nil(t, err, `err should be nil`)
-	assert.Equal(t, ``, g.PlayerChoices[0], `PlayerChoices[0] should be set to empty string`)
+	assert.Equal(t, ``, g.CurrentChoices[0], `CurrentChoices[0] should be set to empty string`)
 	assert.Equal(t, _WAITING_FOR_RESTART, g.State, `State should still be _WAITING_FOR_RESTART`)
 
 	err = performAct(json, `0`, g)
@@ -147,7 +150,7 @@ func Test_performAct_restart_success(t *testing.T){
 	err = performAct(json, `1`, g)
 
 	assert.Nil(t, err, `err should be nil`)
-	assert.Equal(t, ``, g.PlayerChoices[1], `PlayerChoices[1] should be set to empty string`)
+	assert.Equal(t, ``, g.CurrentChoices[1], `CurrentChoices[1] should be set to empty string`)
 	assert.Equal(t, _GAME_IN_PROGRESS, g.State, `State should be set to _GAME_IN_PROGRESS`)
 	dur, _ = time.ParseDuration(strconv.Itoa(_START_TIME_BUF) + _TIME_UNIT)
 	assert.Equal(t, now().Add(dur), g.TurnStart, `TurnStart should have been updated`)
@@ -234,7 +237,7 @@ func Test_performAct_choose_when_players_choice_has_already_been_made(t *testing
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = [2]string{`0`, `1`}
-	g.PlayerChoices = [2]string{`0`, `1`}
+	g.CurrentChoices = [2]string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
@@ -269,15 +272,15 @@ func Test_performAct_choose_success(t *testing.T){
 	err := performAct(json, `0`, g)
 
 	assert.Nil(t, err, `err should be nil`)
-	assert.Equal(t, _RCK, g.PlayerChoices[0], `PlayerChoice[0] should have been set`)
-	assert.Equal(t, ``, g.PlayerChoices[1], `PlayerChoice[1] should still be unset`)
+	assert.Equal(t, _RCK, g.CurrentChoices[0], `PlayerChoice[0] should have been set`)
+	assert.Equal(t, ``, g.CurrentChoices[1], `PlayerChoice[1] should still be unset`)
 
 	json[_VAL] = _PPR
 	err = performAct(json, `1`, g)
 
 	assert.Nil(t, err, `err should be nil`)
-	assert.Equal(t, _RCK, g.PlayerChoices[0], `PlayerChoice[0] should still be same value`)
-	assert.Equal(t, _PPR, g.PlayerChoices[1], `PlayerChoice[1] should have been set`)
+	assert.Equal(t, _RCK, g.CurrentChoices[0], `PlayerChoice[0] should still be same value`)
+	assert.Equal(t, _PPR, g.CurrentChoices[1], `PlayerChoice[1] should have been set`)
 }
 
 func standardSetup(){

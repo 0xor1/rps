@@ -15,8 +15,8 @@ func Test_NewGame(t *testing.T){
 	assert.True(t, g.DeleteAfter.IsZero(), `game should have not initialised DeleteAfter`)
 	assert.NotEqual(t, ``, g.PlayerIds[0], `game should have initialised PlayerIds[0]`)
 	assert.Equal(t, ``, g.PlayerIds[1], `game should not have initialised PlayerIds[1]`)
-	assert.Equal(t, ``, g.PlayerChoices[0], `game should not have initialised PlayerChoices[0]`)
-	assert.Equal(t, ``, g.PlayerChoices[1], `game should not have initialised PlayerChoices[1]`)
+	assert.Equal(t, ``, g.CurrentChoices[0], `game should not have initialised CurrentChoices[0]`)
+	assert.Equal(t, ``, g.CurrentChoices[1], `game should not have initialised CurrentChoices[1]`)
 	assert.Equal(t, _WAITING_FOR_OPPONENT, g.State, `game should have set State to _WAITING_FOR_OPPONENT`)
 	assert.True(t, g.TurnStart.IsZero(), `game should not have initialised TurnStart`)
 }
@@ -91,16 +91,7 @@ func Test_UnregisterUser(t *testing.T){
 	g := newGame().(*game)
 	err := g.UnregisterUser(``)
 
-	assert.Equal(t, `user is not a player in this game`, err.Error(), `err should be appropriate`)
-
-	userId := g.CreatedBy()
-	err = g.UnregisterUser(userId)
-
-	assert.Nil(t, err, `err should be nil`)
-	assert.Equal(t, ``, g.PlayerIds[0], `PlayerIds[0] should be empty string`)
-
-	err = g.UnregisterUser(userId)
-	assert.Equal(t, `user is not a player in this game`, err.Error(), `err should be appropriate`)
+	assert.Equal(t, `leaving the game is not permitted, simply choose not to restart after the next turn is over instead`, err.Error(), `err should be appropriate`)
 }
 
 func Test_Kick(t *testing.T){
@@ -121,40 +112,42 @@ func Test_Kick(t *testing.T){
 	g.TurnStart = now().Add(dur)
 
 	assert.True(t, g.Kick(), `Kick should return true when Turn is over`)
-	assert.NotEqual(t, ``, g.PlayerChoices[0], `PlayerChoices[0] should have been set`)
-	assert.NotEqual(t, ``, g.PlayerChoices[1], `PlayerChoices[1] should have been set`)
+	assert.NotEqual(t, ``, g.CurrentChoices[0], `CurrentChoices[0] should have been set`)
+	assert.NotEqual(t, ``, g.CurrentChoices[1], `CurrentChoices[1] should have been set`)
 	assert.Equal(t, _WAITING_FOR_RESTART, g.State, `State should have been set to _WAITING_FOR_RESTART`)
 
-	//This for loop section isn't needed to test program correctness
-	//kick x2 more times to get random number generator to produce a 1 to get 100% test coverage ;)
-	for i := 0; i < 2; i++ {
-		g.State = _GAME_IN_PROGRESS
-		g.PlayerChoices = [2]string{}
-		g.Kick()
+	for i := 0; i < _MAX_TURNS; i++ {
+		g.PastChoices = append(g.PastChoices, [2]string{})
 	}
+	g.State = _GAME_IN_PROGRESS
 
+	assert.True(t, g.Kick(), `Kick should return true when _MAX_TURNS reached`)
+	assert.Equal(t, _DEACTIVATED, g.State, `State should have been set to _DEACTIVATED`)
+
+
+	g.State = _WAITING_FOR_RESTART
 	dur, _ = time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 
 	assert.True(t, g.Kick(), `Kick should return true when Restart time out is over`)
 	assert.Equal(t, _DEACTIVATED, g.State, `State should have been set to _DEACTIVATED`)
+}
 
-	g.State = _WAITING_FOR_RESTART
-	g.PlayerChoices[0] = ``
+func Test_makeChoice(t *testing.T){
+	standardSetup()
+	g := newGame().(*game)
 
-	assert.True(t, g.Kick(), `Kick should return true when Restart time out is over`)
-	assert.Equal(t, _WAITING_FOR_OPPONENT, g.State, `State should have been set to _WAITING_FOR_OPPONENT`)
-	assert.NotEqual(t, ``, g.PlayerIds[0], `PlayerIds[0] should not have been cleared from the game`)
-	assert.Equal(t, ``, g.PlayerIds[1], `PlayerIds[1] should have been cleared from the game`)
-	assert.Equal(t, ``, g.PlayerChoices[1], `PlayerChoices[1] should have been cleared from the game`)
+	dur, _ := time.ParseDuration(`-` + strconv.Itoa(1000) + _TIME_UNIT)
+	g.TurnStart = now().Add(dur)
+	g.State = _GAME_IN_PROGRESS
+	g.PlayerIds[0] = `0`
+	g.PlayerIds[1] = `1`
+	g.CurrentChoices[0] = `ppr`
+	for i := 0; i < _MAX_TURNS; i++ {
+		g.PastChoices = append(g.PastChoices, [2]string{})
+	}
 
-	g.State = _WAITING_FOR_RESTART
-	g.PlayerIds = [2]string{`1`,`2`}
-	g.PlayerChoices = [2]string{`1`,``}
+	g.makeChoice(`1`, `rck`)
 
-	assert.True(t, g.Kick(), `Kick should return true when Restart time out is over`)
-	assert.Equal(t, _WAITING_FOR_OPPONENT, g.State, `State should have been set to _WAITING_FOR_OPPONENT`)
-	assert.NotEqual(t, ``, g.PlayerIds[1], `PlayerIds[0] should not have been cleared from the game`)
-	assert.Equal(t, ``, g.PlayerIds[0], `PlayerIds[1] should have been cleared from the game`)
-	assert.Equal(t, ``, g.PlayerChoices[0], `PlayerChoices[0] should have been cleared from the game`)
+	assert.Equal(t, _DEACTIVATED, g.State, `State should have been set to _DEACTIVATED`)
 }

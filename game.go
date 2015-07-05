@@ -17,7 +17,7 @@ const(
 	_RESTART_TIME_LIMIT			= 10000
 	_TIME_UNIT					= `ms`
 	_DELETE_AFTER				= `10m`
-	_MAX_TURNS					= 101
+	_MAX_TURNS					= 51
 	//STATE
 	_WAITING_FOR_OPPONENT		= 0
 	_GAME_IN_PROGRESS 			= 1

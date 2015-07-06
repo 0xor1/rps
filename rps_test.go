@@ -36,24 +36,28 @@ func Test_getJoinResp(t *testing.T){
 	assert.Equal(t, g.getPlayerIdx(``), json[`myIdx`], `myIdx should be -1 when just observing`)
 	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
-	assert.Equal(t, g.CurrentChoices, json[`choices`], `choices should be g.CurrentChoices`)
+	assert.Equal(t, g.CurrentChoices, json[`currentChoices`], `currentChoices should be g.CurrentChoices`)
 	assert.Equal(t, g.PastChoices, json[`pastChoices`], `pastChoices should be g.PastChoices`)
 	assert.Equal(t, _RESTART_TIME_LIMIT, json[`restartTimeLimit`], `restartTimeLimit should be _RESTART_TIME_LIMIT`)
 	assert.Equal(t, _MAX_TURNS, json[`maxTurns`], `maxTurns should be _MAX_TURNS`)
-	assert.Equal(t, 10, len(json), `json should contain 10 entries`)
+	assert.Equal(t, len(g.PastChoices), json[`pastChoicesCount`], `pastChoicesCount should len(g.PastChoices)`)
+	assert.Equal(t, 11, len(json), `json should contain 11 entries`)
 }
 
 func Test_getEntityChangeResp(t *testing.T){
 	standardSetup()
 	g := newGame().(*game)
+	g.PastChoices = [][2]string{[2]string{`rck`, `ppr`}}
 
 	json := getEntityChangeResp(``, g)
 
 	var zeroTime time.Time
 	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
-	assert.Equal(t, g.CurrentChoices, json[`choices`], `choices should be g.CurrentChoices`)
-	assert.Equal(t, 3, len(json), `json should contain 3 entries`)
+	assert.Equal(t, g.CurrentChoices, json[`currentChoices`], `currentChoices should be g.CurrentChoices`)
+	assert.Equal(t, len(g.PastChoices), json[`pastChoicesCount`], `pastChoicesCount should len(g.PastChoices)`)
+	assert.Equal(t, [2]string{`rck`, `ppr`}, json[`penultimateChoices`], `penultimateChoices should be 'rck', 'ppr'`)
+	assert.Equal(t, 5, len(json), `json should contain 5 entries`)
 }
 
 func Test_getEntityChangeResp_when_one_user_has_entered_a_choice_and_tother_hasnt(t *testing.T){
@@ -65,11 +69,11 @@ func Test_getEntityChangeResp_when_one_user_has_entered_a_choice_and_tother_hasn
 
 	json := getEntityChangeResp(`1`, g)
 
-	assert.Equal(t, [2]string{`rck`, ``}, json[`choices`], `state should be g.State`)
+	assert.Equal(t, [2]string{`rck`, ``}, json[`currentChoices`], `currentChoices should be visible`)
 
 	json = getEntityChangeResp(`2`, g)
 
-	assert.Equal(t, [2]string{``, ``}, json[`choices`], `state should be g.State`)
+	assert.Equal(t, [2]string{``, ``}, json[`currentChoices`], `currentChoices should not be visible`)
 }
 
 func Test_performAct_without_act_param(t *testing.T){

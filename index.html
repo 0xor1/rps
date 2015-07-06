@@ -296,14 +296,14 @@ const(
 
 func RouteLocalTest(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string)<span class="cov8" title="1">{
         initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
-        joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
+        joak.RouteLocalTest(router, newGame, 600, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }</span>
 
 func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctxFactory joak.ContextFactory) error <span class="cov8" title="1">{
         initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
         deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
         clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
-        return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctxFactory)
+        return joak.RouteGaeProd(router, newGame, 600, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctxFactory)
 }</span>
 
 func initStaticProperties(ops []string, rhm [][]int, millisecsPerChoice int)<span class="cov8" title="1">{
@@ -328,15 +328,20 @@ func getJoinResp(userId string, e oak.Entity) oak.Json <span class="cov8" title=
 
 func getEntityChangeResp(userId string, e oak.Entity) oak.Json <span class="cov8" title="1">{
         g, _ := e.(*game)
+        pastChoicesCount := len(g.PastChoices)
         json := oak.Json{
                 `turnStart`: g.TurnStart,
                 `state`: g.State,
-                `choices`: g.CurrentChoices,
+                `currentChoices`: g.CurrentChoices,
+                `pastChoicesCount`: pastChoicesCount,
         }
-        if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
+        if pastChoicesCount &gt; 0 </span><span class="cov8" title="1">{
+                json[`penultimateChoices`] = g.PastChoices[pastChoicesCount - 1]
+        }</span>
+        <span class="cov8" title="1">if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
                 idx := g.getPlayerIdx(userId)
                 if idx == -1 || g.CurrentChoices[idx] == `` </span><span class="cov8" title="1">{
-                        json[`choices`] = [2]string{}
+                        json[`currentChoices`] = [2]string{}
                 }</span>
         }
         <span class="cov8" title="1">return json</span>

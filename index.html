@@ -86,14 +86,14 @@ import(
 const(
         _TURN_LENGTH_ERROR_MARGIN        = 500
         _START_TIME_BUF                                = 5000
-        _RESTART_TIME_LIMIT                        = 10000
+        _REMATCH_TIME_LIMIT                 = 10000
         _TIME_UNIT                                        = `ms`
         _DELETE_AFTER                                = `10m`
         _MAX_TURNS                                        = 51
         //STATE
         _WAITING_FOR_OPPONENT                = 0
         _GAME_IN_PROGRESS                         = 1
-        _WAITING_FOR_RESTART                = 2
+        _WAITING_FOR_REMATCH                = 2
         _DEACTIVATED                                = 3
 )
 
@@ -173,7 +173,7 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
         if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
                 dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
                 if now().After(g.TurnStart.Add(dur)) </span><span class="cov8" title="1">{
-                        g.State = _WAITING_FOR_RESTART
+                        g.State = _WAITING_FOR_REMATCH
                         ret = true
                         for i := 0; i &lt; 2; i++ </span><span class="cov8" title="1">{
                                 if g.CurrentChoices[i] == `` </span><span class="cov8" title="1">{
@@ -184,13 +184,13 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
                         if len(g.PastChoices) &gt;= _MAX_TURNS </span><span class="cov8" title="1">{
                                 g.State = _DEACTIVATED
                         }</span><span class="cov8" title="1"> else {
-                                g.State = _WAITING_FOR_RESTART
+                                g.State = _WAITING_FOR_REMATCH
                         }</span>
                 }
         }
 
-        <span class="cov8" title="1">if g.State == _WAITING_FOR_RESTART </span><span class="cov8" title="1">{
-                dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT) + _TIME_UNIT)
+        <span class="cov8" title="1">if g.State == _WAITING_FOR_REMATCH </span><span class="cov8" title="1">{
+                dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _REMATCH_TIME_LIMIT) + _TIME_UNIT)
                 if now().After(g.TurnStart.Add(dur)) </span><span class="cov8" title="1">{
                         g.State = _DEACTIVATED
                         ret = true
@@ -224,7 +224,7 @@ func (g *game) makeChoice(userId string, choice string) error <span class="cov8"
                                 if len(g.PastChoices) &gt;= _MAX_TURNS </span><span class="cov8" title="1">{
                                         g.State = _DEACTIVATED
                                 }</span><span class="cov8" title="1"> else {
-                                        g.State = _WAITING_FOR_RESTART
+                                        g.State = _WAITING_FOR_REMATCH
                                 }</span>
                         }
                         <span class="cov8" title="1">return nil</span>
@@ -237,7 +237,7 @@ func (g *game) makeChoice(userId string, choice string) error <span class="cov8"
 func (g *game) restart(userId string) error <span class="cov8" title="1">{
         g.Kick()
 
-        if g.State != _WAITING_FOR_RESTART </span><span class="cov8" title="1">{
+        if g.State != _WAITING_FOR_REMATCH </span><span class="cov8" title="1">{
                 return errors.New(`game is not waiting for restart`)
         }</span>
 
@@ -320,7 +320,7 @@ func getJoinResp(userId string, e oak.Entity) oak.Json <span class="cov8" title=
         resp[`pastChoices`] = g.PastChoices
         resp[`resultHalfMatrix`] = resultHalfMatrix
         resp[`turnLength`] = turnLength
-        resp[`restartTimeLimit`] = _RESTART_TIME_LIMIT
+        resp[`rematchTimeLimit`] = _REMATCH_TIME_LIMIT
         resp[`maxTurns`] = _MAX_TURNS
         resp[`myIdx`] = g.getPlayerIdx(userId)
         return resp

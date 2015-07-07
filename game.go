@@ -14,14 +14,14 @@ import(
 const(
 	_TURN_LENGTH_ERROR_MARGIN	= 500
 	_START_TIME_BUF				= 5000
-	_RESTART_TIME_LIMIT			= 10000
+	_REMATCH_TIME_LIMIT 		= 10000
 	_TIME_UNIT					= `ms`
 	_DELETE_AFTER				= `10m`
 	_MAX_TURNS					= 51
 	//STATE
 	_WAITING_FOR_OPPONENT		= 0
 	_GAME_IN_PROGRESS 			= 1
-	_WAITING_FOR_RESTART		= 2
+	_WAITING_FOR_REMATCH		= 2
 	_DEACTIVATED				= 3
 )
 
@@ -101,7 +101,7 @@ func (g *game) Kick() bool {
 	if g.State == _GAME_IN_PROGRESS {
 		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
 		if now().After(g.TurnStart.Add(dur)) {
-			g.State = _WAITING_FOR_RESTART
+			g.State = _WAITING_FOR_REMATCH
 			ret = true
 			for i := 0; i < 2; i++ {
 				if g.CurrentChoices[i] == `` {
@@ -112,13 +112,13 @@ func (g *game) Kick() bool {
 			if len(g.PastChoices) >= _MAX_TURNS {
 				g.State = _DEACTIVATED
 			} else {
-				g.State = _WAITING_FOR_RESTART
+				g.State = _WAITING_FOR_REMATCH
 			}
 		}
 	}
 
-	if g.State == _WAITING_FOR_RESTART {
-		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT) + _TIME_UNIT)
+	if g.State == _WAITING_FOR_REMATCH {
+		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _REMATCH_TIME_LIMIT) + _TIME_UNIT)
 		if now().After(g.TurnStart.Add(dur)) {
 			g.State = _DEACTIVATED
 			ret = true
@@ -152,7 +152,7 @@ func (g *game) makeChoice(userId string, choice string) error {
 				if len(g.PastChoices) >= _MAX_TURNS {
 					g.State = _DEACTIVATED
 				} else {
-					g.State = _WAITING_FOR_RESTART
+					g.State = _WAITING_FOR_REMATCH
 				}
 			}
 			return nil
@@ -165,7 +165,7 @@ func (g *game) makeChoice(userId string, choice string) error {
 func (g *game) restart(userId string) error {
 	g.Kick()
 
-	if g.State != _WAITING_FOR_RESTART {
+	if g.State != _WAITING_FOR_REMATCH {
 		return errors.New(`game is not waiting for restart`)
 	}
 

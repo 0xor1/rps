@@ -114,7 +114,7 @@ func Test_Kick(t *testing.T){
 	assert.True(t, g.Kick(), `Kick should return true when Turn is over`)
 	assert.NotEqual(t, ``, g.CurrentChoices[0], `CurrentChoices[0] should have been set`)
 	assert.NotEqual(t, ``, g.CurrentChoices[1], `CurrentChoices[1] should have been set`)
-	assert.Equal(t, _WAITING_FOR_RESTART, g.State, `State should have been set to _WAITING_FOR_RESTART`)
+	assert.Equal(t, _WAITING_FOR_REMATCH, g.State, `State should have been set to _WAITING_FOR_RESTART`)
 
 	for i := 0; i < _MAX_TURNS; i++ {
 		g.PastChoices = append(g.PastChoices, [2]string{})
@@ -125,8 +125,8 @@ func Test_Kick(t *testing.T){
 	assert.Equal(t, _DEACTIVATED, g.State, `State should have been set to _DEACTIVATED`)
 
 
-	g.State = _WAITING_FOR_RESTART
-	dur, _ = time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _RESTART_TIME_LIMIT + 1000) + _TIME_UNIT)
+	g.State = _WAITING_FOR_REMATCH
+	dur, _ = time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _REMATCH_TIME_LIMIT + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 
 	assert.True(t, g.Kick(), `Kick should return true when Restart time out is over`)

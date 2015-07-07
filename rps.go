@@ -43,7 +43,7 @@ func getJoinResp(userId string, e oak.Entity) oak.Json {
 	resp[`pastChoices`] = g.PastChoices
 	resp[`resultHalfMatrix`] = resultHalfMatrix
 	resp[`turnLength`] = turnLength
-	resp[`restartTimeLimit`] = _RESTART_TIME_LIMIT
+	resp[`rematchTimeLimit`] = _REMATCH_TIME_LIMIT
 	resp[`maxTurns`] = _MAX_TURNS
 	resp[`myIdx`] = g.getPlayerIdx(userId)
 	return resp

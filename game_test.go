@@ -12,7 +12,7 @@ func Test_NewGame(t *testing.T){
 	g := newGame().(*game)
 
 	assert.Equal(t, 0, g.GetVersion(), `game should have initialised version to 0`)
-	assert.True(t, g.DeleteAfter.IsZero(), `game should have not initialised DeleteAfter`)
+	assert.True(t, !g.DeleteAfter.IsZero(), `game should have initialised DeleteAfter`)
 	assert.NotEqual(t, ``, g.PlayerIds[0], `game should have initialised PlayerIds[0]`)
 	assert.Equal(t, ``, g.PlayerIds[1], `game should not have initialised PlayerIds[1]`)
 	assert.Equal(t, ``, g.CurrentChoices[0], `game should not have initialised CurrentChoices[0]`)
@@ -40,7 +40,7 @@ func Test_DeleteAfter(t *testing.T){
 	standardSetup()
 	g := newGame().(*game)
 
-	assert.True(t, g.DeleteAfter.IsZero(), `DeleteAfter should be zero value`)
+	assert.True(t, !g.DeleteAfter.IsZero(), `DeleteAfter should not be zero value`)
 
 	now := time.Now().UTC()
 	g.SetDeleteAfter(now)
@@ -51,7 +51,6 @@ func Test_DeleteAfter(t *testing.T){
 func Test_IsActive(t *testing.T){
 	standardSetup()
 	g := newGame().(*game)
-	g.DeleteAfter = now()
 
 	assert.True(t, g.IsActive(), `game should start as active`)
 

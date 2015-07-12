@@ -37,7 +37,8 @@ func now() time.Time {
 }
 
 func newGame() joak.Entity {
-	g := &game{State: _WAITING_FOR_OPPONENT}
+	dur, _ := time.ParseDuration(_DELETE_AFTER)
+	g := &game{State: _WAITING_FOR_OPPONENT, DeleteAfter: now().Add(dur)}
 	g.PlayerIds[0] = sid.ObjectId()
 	g.PastChoices = [][2]string{}
 	return g

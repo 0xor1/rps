@@ -109,7 +109,8 @@ func now() time.Time <span class="cov8" title="1">{
 }</span>
 
 func newGame() joak.Entity <span class="cov8" title="1">{
-        g := &amp;game{State: _WAITING_FOR_OPPONENT}
+        dur, _ := time.ParseDuration(_DELETE_AFTER)
+        g := &amp;game{State: _WAITING_FOR_OPPONENT, DeleteAfter: now().Add(dur)}
         g.PlayerIds[0] = sid.ObjectId()
         g.PastChoices = [][2]string{}
         return g

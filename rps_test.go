@@ -121,7 +121,7 @@ func Test_performAct_restart_with_invalid_user(t *testing.T){
 	json := oak.Json{_ACT:_RESTART}
 
 	g := newGame().(*game)
-	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
+	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_REMATCH
 
@@ -135,7 +135,7 @@ func Test_performAct_restart_success(t *testing.T){
 	json := oak.Json{_ACT:_RESTART}
 
 	g := newGame().(*game)
-	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
+	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_REMATCH
 	g.PlayerIds = [2]string{`0`, `1`}

@@ -108,7 +108,7 @@ func Test_Kick(t *testing.T){
 
 	assert.False(t, g.Kick(), `Kick should return false when _GAME_IN_PROGRESS`)
 
-	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + 1000) + _TIME_UNIT)
+	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 
 	assert.True(t, g.Kick(), `Kick should return true when Turn is over`)
@@ -126,7 +126,7 @@ func Test_Kick(t *testing.T){
 
 
 	g.State = _WAITING_FOR_REMATCH
-	dur, _ = time.ParseDuration(`-` + strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _REMATCH_TIME_LIMIT + 1000) + _TIME_UNIT)
+	dur, _ = time.ParseDuration(`-` + strconv.Itoa(turnLength + _REMATCH_TIME_LIMIT + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 
 	assert.True(t, g.Kick(), `Kick should return true when Restart time out is over`)

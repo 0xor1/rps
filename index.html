@@ -84,7 +84,6 @@ import(
 )
 
 const(
-        _TURN_LENGTH_ERROR_MARGIN        = 500
         _START_TIME_BUF                                = 5000
         _REMATCH_TIME_LIMIT                 = 10000
         _TIME_UNIT                                        = `ms`
@@ -143,7 +142,7 @@ func (g *game) SetDeleteAfter(t time.Time) <span class="cov8" title="1">{
 }</span>
 
 func (g *game) IsActive() bool <span class="cov8" title="1">{
-        return !now().After(g.DeleteAfter) &amp;&amp; g.State != _DEACTIVATED
+        return now().Before(g.DeleteAfter) &amp;&amp; g.State != _DEACTIVATED
 }</span>
 
 func (g *game) CreatedBy() string <span class="cov8" title="1">{
@@ -172,7 +171,7 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
 
         <span class="cov8" title="1">ret := false
         if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
-                dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
+                dur, _ := time.ParseDuration(strconv.Itoa(turnLength) + _TIME_UNIT)
                 if now().After(g.TurnStart.Add(dur)) </span><span class="cov8" title="1">{
                         g.State = _WAITING_FOR_REMATCH
                         ret = true
@@ -191,7 +190,7 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
         }
 
         <span class="cov8" title="1">if g.State == _WAITING_FOR_REMATCH </span><span class="cov8" title="1">{
-                dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _REMATCH_TIME_LIMIT) + _TIME_UNIT)
+                dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _REMATCH_TIME_LIMIT) + _TIME_UNIT)
                 if now().After(g.TurnStart.Add(dur)) </span><span class="cov8" title="1">{
                         g.State = _DEACTIVATED
                         ret = true
@@ -297,7 +296,8 @@ const(
 
 func RouteLocalTest(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string)<span class="cov8" title="1">{
         initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
-        joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
+        deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
+        joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter)
 }</span>
 
 func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctxFactory joak.ContextFactory) error <span class="cov8" title="1">{

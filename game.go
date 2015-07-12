@@ -12,7 +12,6 @@ import(
 )
 
 const(
-	_TURN_LENGTH_ERROR_MARGIN	= 500
 	_START_TIME_BUF				= 5000
 	_REMATCH_TIME_LIMIT 		= 10000
 	_TIME_UNIT					= `ms`
@@ -100,7 +99,7 @@ func (g *game) Kick() bool {
 
 	ret := false
 	if g.State == _GAME_IN_PROGRESS {
-		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN) + _TIME_UNIT)
+		dur, _ := time.ParseDuration(strconv.Itoa(turnLength) + _TIME_UNIT)
 		if now().After(g.TurnStart.Add(dur)) {
 			g.State = _WAITING_FOR_REMATCH
 			ret = true
@@ -119,7 +118,7 @@ func (g *game) Kick() bool {
 	}
 
 	if g.State == _WAITING_FOR_REMATCH {
-		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _TURN_LENGTH_ERROR_MARGIN + _REMATCH_TIME_LIMIT) + _TIME_UNIT)
+		dur, _ := time.ParseDuration(strconv.Itoa(turnLength + _REMATCH_TIME_LIMIT) + _TIME_UNIT)
 		if now().After(g.TurnStart.Add(dur)) {
 			g.State = _DEACTIVATED
 			ret = true

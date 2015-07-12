@@ -19,14 +19,14 @@ const(
 
 func RouteLocalTest(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string){
 	initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
-	joak.RouteLocalTest(router, newGame, 600, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
+	joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct)
 }
 
 func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctxFactory joak.ContextFactory) error {
 	initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
 	deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
 	clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
-	return joak.RouteGaeProd(router, newGame, 600, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctxFactory)
+	return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctxFactory)
 }
 
 func initStaticProperties(ops []string, rhm [][]int, millisecsPerChoice int){

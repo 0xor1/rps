@@ -70,7 +70,7 @@ func (g *game) SetDeleteAfter(t time.Time) {
 }
 
 func (g *game) IsActive() bool {
-	return g.State != _DEACTIVATED
+	return !now().After(g.DeleteAfter) && g.State != _DEACTIVATED
 }
 
 func (g *game) CreatedBy() string {

@@ -51,6 +51,7 @@ func Test_DeleteAfter(t *testing.T){
 func Test_IsActive(t *testing.T){
 	standardSetup()
 	g := newGame().(*game)
+	g.DeleteAfter = now()
 
 	assert.True(t, g.IsActive(), `game should start as active`)
 

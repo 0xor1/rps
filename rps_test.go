@@ -47,7 +47,7 @@ func Test_getJoinResp(t *testing.T){
 func Test_getEntityChangeResp(t *testing.T){
 	standardSetup()
 	g := newGame().(*game)
-	g.PastChoices = [][2]string{[2]string{`rck`, `ppr`}}
+	g.PastChoices = [][]string{[]string{`rck`, `ppr`}}
 
 	json := getEntityChangeResp(``, g)
 
@@ -56,7 +56,7 @@ func Test_getEntityChangeResp(t *testing.T){
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
 	assert.Equal(t, g.CurrentChoices, json[`currentChoices`], `currentChoices should be g.CurrentChoices`)
 	assert.Equal(t, len(g.PastChoices), json[`pastChoicesCount`], `pastChoicesCount should len(g.PastChoices)`)
-	assert.Equal(t, [2]string{`rck`, `ppr`}, json[`penultimateChoices`], `penultimateChoices should be 'rck', 'ppr'`)
+	assert.Equal(t, []string{`rck`, `ppr`}, json[`penultimateChoices`], `penultimateChoices should be 'rck', 'ppr'`)
 	assert.Equal(t, 5, len(json), `json should contain 5 entries`)
 }
 
@@ -64,16 +64,16 @@ func Test_getEntityChangeResp_when_one_user_has_entered_a_choice_and_tother_hasn
 	standardSetup()
 	g := newGame().(*game)
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`1`, `2`}
-	g.CurrentChoices = [2]string{`rck`, ``}
+	g.PlayerIds = []string{`1`, `2`}
+	g.CurrentChoices = []string{`rck`, ``}
 
 	json := getEntityChangeResp(`1`, g)
 
-	assert.Equal(t, [2]string{`rck`, ``}, json[`currentChoices`], `currentChoices should be visible`)
+	assert.Equal(t, []string{`rck`, ``}, json[`currentChoices`], `currentChoices should be visible`)
 
 	json = getEntityChangeResp(`2`, g)
 
-	assert.Equal(t, [2]string{``, ``}, json[`currentChoices`], `currentChoices should not be visible`)
+	assert.Equal(t, []string{``, ``}, json[`currentChoices`], `currentChoices should not be visible`)
 }
 
 func Test_performAct_without_act_param(t *testing.T){
@@ -138,8 +138,8 @@ func Test_performAct_restart_success(t *testing.T){
 	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_REMATCH
-	g.PlayerIds = [2]string{`0`, `1`}
-	g.CurrentChoices = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
+	g.CurrentChoices = []string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
@@ -168,7 +168,7 @@ func Test_performAct_choose_without_val_param(t *testing.T){
 	g := newGame().(*game)
 	g.TurnStart = now()
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
@@ -182,7 +182,7 @@ func Test_performAct_choose_with_non_string_val_param(t *testing.T){
 	g := newGame().(*game)
 	g.TurnStart = now()
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
@@ -210,7 +210,7 @@ func Test_performAct_choose_with_invalid_player_id(t *testing.T){
 	g := newGame().(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
 
 	err := performAct(json, `not_a_valid_player_id`, g)
 
@@ -225,7 +225,7 @@ func Test_performAct_choose_with_invalid_choice(t *testing.T){
 	g := newGame().(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
@@ -240,8 +240,8 @@ func Test_performAct_choose_when_players_choice_has_already_been_made(t *testing
 	g := newGame().(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`0`, `1`}
-	g.CurrentChoices = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
+	g.CurrentChoices = []string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
@@ -256,7 +256,7 @@ func Test_performAct_choose_when_turn_has_not_started(t *testing.T){
 	g := newGame().(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 
@@ -271,7 +271,7 @@ func Test_performAct_choose_success(t *testing.T){
 	g := newGame().(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
-	g.PlayerIds = [2]string{`0`, `1`}
+	g.PlayerIds = []string{`0`, `1`}
 
 	err := performAct(json, `0`, g)
 

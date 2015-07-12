@@ -37,20 +37,19 @@ func now() time.Time {
 
 func newGame() joak.Entity {
 	dur, _ := time.ParseDuration(_DELETE_AFTER)
-	g := &game{State: _WAITING_FOR_OPPONENT, DeleteAfter: now().Add(dur)}
+	g := &game{State: _WAITING_FOR_OPPONENT, DeleteAfter: now().Add(dur), PlayerIds: []string{``, ``}, PastChoices: [][]string{}, CurrentChoices: []string{``, ``}}
 	g.PlayerIds[0] = sid.ObjectId()
-	g.PastChoices = [][2]string{}
 	return g
 }
 
 type game struct {
 	Version			int			`datastore:",noindex"`
 	DeleteAfter		time.Time	`datastore:""`
-	PlayerIds 		[2]string	`datastore:",noindex"`
+	PlayerIds 		[]string	`datastore:",noindex"`
 	State	 		int			`datastore:",noindex"`
 	TurnStart		time.Time	`datastore:",noindex"`
-	PastChoices 	[][2]string	`datastore:",noindex"`
-	CurrentChoices 	[2]string	`datastore:",noindex"`
+	PastChoices 	[][]string	`datastore:",noindex"`
+	CurrentChoices 	[]string	`datastore:",noindex"`
 }
 
 func (g *game) GetVersion() int {

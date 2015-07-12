@@ -65,7 +65,7 @@ func getEntityChangeResp(userId string, e oak.Entity) oak.Json {
 	if g.State == _GAME_IN_PROGRESS {
 		idx := g.getPlayerIdx(userId)
 		if idx == -1 || g.CurrentChoices[idx] == `` {
-			json[`currentChoices`] = [2]string{}
+			json[`currentChoices`] = []string{``, ``}
 		}
 	}
 	return json

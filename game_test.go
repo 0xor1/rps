@@ -117,7 +117,7 @@ func Test_Kick(t *testing.T){
 	assert.Equal(t, _WAITING_FOR_REMATCH, g.State, `State should have been set to _WAITING_FOR_RESTART`)
 
 	for i := 0; i < _MAX_TURNS; i++ {
-		g.PastChoices = append(g.PastChoices, [2]string{})
+		g.PastChoices = append(g.PastChoices, []string{})
 	}
 	g.State = _GAME_IN_PROGRESS
 
@@ -144,7 +144,7 @@ func Test_makeChoice(t *testing.T){
 	g.PlayerIds[1] = `1`
 	g.CurrentChoices[0] = `ppr`
 	for i := 0; i < _MAX_TURNS; i++ {
-		g.PastChoices = append(g.PastChoices, [2]string{})
+		g.PastChoices = append(g.PastChoices, []string{})
 	}
 
 	g.makeChoice(`1`, `rck`)

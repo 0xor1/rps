@@ -40,7 +40,7 @@ func Test_getJoinResp(t *testing.T){
 	assert.Equal(t, g.PastChoices, json[`pastChoices`], `pastChoices should be g.PastChoices`)
 	assert.Equal(t, _REMATCH_TIME_LIMIT, json[`rematchTimeLimit`], `rematchTimeLimit should be _RESTART_TIME_LIMIT`)
 	assert.Equal(t, _DOUBLE_MAX_TURNS / 2, json[`maxTurns`], `maxTurns should be _DOUBLE_MAX_TURNS / 2`)
-	assert.Equal(t, len(g.PastChoices), json[`pastChoicesCount`], `pastChoicesCount should len(g.PastChoices)`)
+	assert.Equal(t, len(g.PastChoices), json[`pastChoicesLen`], `pastChoicesLen should len(g.PastChoices)`)
 	assert.Equal(t, 11, len(json), `json should contain 11 entries`)
 }
 
@@ -55,7 +55,7 @@ func Test_getEntityChangeResp(t *testing.T){
 	assert.Equal(t, zeroTime, json[`turnStart`], `turnStart should be zero time`)
 	assert.Equal(t, g.State, json[`state`], `state should be g.State`)
 	assert.Equal(t, g.CurrentChoices, json[`currentChoices`], `currentChoices should be g.CurrentChoices`)
-	assert.Equal(t, len(g.PastChoices), json[`pastChoicesCount`], `pastChoicesCount should len(g.PastChoices)`)
+	assert.Equal(t, len(g.PastChoices), json[`pastChoicesLen`], `pastChoicesLen should len(g.PastChoices)`)
 	assert.Equal(t, []string{`rck`, `ppr`}, json[`penultimateChoices`], `penultimateChoices should be 'rck', 'ppr'`)
 	assert.Equal(t, 5, len(json), `json should contain 5 entries`)
 }

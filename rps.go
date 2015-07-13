@@ -52,15 +52,15 @@ func getJoinResp(userId string, e oak.Entity) oak.Json {
 
 func getEntityChangeResp(userId string, e oak.Entity) oak.Json {
 	g, _ := e.(*game)
-	pastChoicesCount := len(g.PastChoices)
+	pastChoicesLen := len(g.PastChoices)
 	json := oak.Json{
 		`turnStart`: g.TurnStart,
 		`state`: g.State,
 		`currentChoices`: g.CurrentChoices,
-		`pastChoicesCount`: pastChoicesCount,
+		`pastChoicesLen`: pastChoicesLen,
 	}
-	if pastChoicesCount > 0 {
-		json[`penultimateChoices`] = g.PastChoices[pastChoicesCount - 2:]
+	if pastChoicesLen > 0 {
+		json[`penultimateChoices`] = g.PastChoices[pastChoicesLen - 2:]
 	}
 	if g.State == _GAME_IN_PROGRESS {
 		idx := g.getPlayerIdx(userId)

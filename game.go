@@ -16,7 +16,7 @@ const(
 	_REMATCH_TIME_LIMIT 		= 10000
 	_TIME_UNIT					= `ms`
 	_DELETE_AFTER				= `10m`
-	_MAX_TURNS					= 51
+	_DOUBLE_MAX_TURNS			= 102
 	//STATE
 	_WAITING_FOR_OPPONENT		= 0
 	_GAME_IN_PROGRESS 			= 1
@@ -36,9 +36,16 @@ func now() time.Time {
 }
 
 func newGame() joak.Entity {
+	return &game{PlayerIds: []string{}, PastChoices: []string{}, CurrentChoices: []string{}}
+}
+
+func initGame(e joak.Entity) joak.Entity {
+	g := e.(*game)
+	g.State = _WAITING_FOR_OPPONENT
 	dur, _ := time.ParseDuration(_DELETE_AFTER)
-	g := &game{State: _WAITING_FOR_OPPONENT, DeleteAfter: now().Add(dur), PlayerIds: []string{``, ``}, PastChoices: [][]string{}, CurrentChoices: []string{``, ``}}
-	g.PlayerIds[0] = sid.ObjectId()
+	g.DeleteAfter = now().Add(dur)
+	g.PlayerIds = []string{sid.ObjectId(), ``}
+	g.CurrentChoices = []string{``, ``}
 	return g
 }
 
@@ -48,7 +55,7 @@ type game struct {
 	PlayerIds 		[]string	`datastore:",noindex"`
 	State	 		int			`datastore:",noindex"`
 	TurnStart		time.Time	`datastore:",noindex"`
-	PastChoices 	[][]string	`datastore:",noindex"`
+	PastChoices 	[]string	`datastore:",noindex"`
 	CurrentChoices 	[]string	`datastore:",noindex"`
 }
 
@@ -107,8 +114,8 @@ func (g *game) Kick() bool {
 					g.CurrentChoices[i] = options[rand.Intn(len(options))]
 				}
 			}
-			g.PastChoices = append(g.PastChoices, g.CurrentChoices)
-			if len(g.PastChoices) >= _MAX_TURNS {
+			g.PastChoices = append(g.PastChoices, g.CurrentChoices[0], g.CurrentChoices[1])
+			if len(g.PastChoices) >= _DOUBLE_MAX_TURNS {
 				g.State = _DEACTIVATED
 			} else {
 				g.State = _WAITING_FOR_REMATCH
@@ -147,8 +154,8 @@ func (g *game) makeChoice(userId string, choice string) error {
 		if now().After(g.TurnStart) {
 			g.CurrentChoices[idx] = choice
 			if g.CurrentChoices[0] != `` && g.CurrentChoices[1] != ``{
-				g.PastChoices = append(g.PastChoices, g.CurrentChoices)
-				if len(g.PastChoices) >= _MAX_TURNS {
+				g.PastChoices = append(g.PastChoices, g.CurrentChoices[0], g.CurrentChoices[1])
+				if len(g.PastChoices) >= _DOUBLE_MAX_TURNS{
 					g.State = _DEACTIVATED
 				} else {
 					g.State = _WAITING_FOR_REMATCH

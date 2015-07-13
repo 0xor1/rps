@@ -88,7 +88,7 @@ const(
         _REMATCH_TIME_LIMIT                 = 10000
         _TIME_UNIT                                        = `ms`
         _DELETE_AFTER                                = `10m`
-        _MAX_TURNS                                        = 51
+        _DOUBLE_MAX_TURNS                        = 102
         //STATE
         _WAITING_FOR_OPPONENT                = 0
         _GAME_IN_PROGRESS                         = 1
@@ -108,9 +108,16 @@ func now() time.Time <span class="cov8" title="1">{
 }</span>
 
 func newGame() joak.Entity <span class="cov8" title="1">{
+        return &amp;game{PlayerIds: []string{}, PastChoices: []string{}, CurrentChoices: []string{}}
+}</span>
+
+func initGame(e joak.Entity) joak.Entity <span class="cov8" title="1">{
+        g := e.(*game)
+        g.State = _WAITING_FOR_OPPONENT
         dur, _ := time.ParseDuration(_DELETE_AFTER)
-        g := &amp;game{State: _WAITING_FOR_OPPONENT, DeleteAfter: now().Add(dur), PlayerIds: []string{``, ``}, PastChoices: [][]string{}, CurrentChoices: []string{``, ``}}
-        g.PlayerIds[0] = sid.ObjectId()
+        g.DeleteAfter = now().Add(dur)
+        g.PlayerIds = []string{sid.ObjectId(), ``}
+        g.CurrentChoices = []string{``, ``}
         return g
 }</span>
 
@@ -120,7 +127,7 @@ type game struct {
         PlayerIds                 []string        `datastore:",noindex"`
         State                         int                        `datastore:",noindex"`
         TurnStart                time.Time        `datastore:",noindex"`
-        PastChoices         [][]string        `datastore:",noindex"`
+        PastChoices         []string        `datastore:",noindex"`
         CurrentChoices         []string        `datastore:",noindex"`
 }
 
@@ -179,8 +186,8 @@ func (g *game) Kick() bool <span class="cov8" title="1">{
                                         g.CurrentChoices[i] = options[rand.Intn(len(options))]
                                 }</span>
                         }
-                        <span class="cov8" title="1">g.PastChoices = append(g.PastChoices, g.CurrentChoices)
-                        if len(g.PastChoices) &gt;= _MAX_TURNS </span><span class="cov8" title="1">{
+                        <span class="cov8" title="1">g.PastChoices = append(g.PastChoices, g.CurrentChoices[0], g.CurrentChoices[1])
+                        if len(g.PastChoices) &gt;= _DOUBLE_MAX_TURNS </span><span class="cov8" title="1">{
                                 g.State = _DEACTIVATED
                         }</span><span class="cov8" title="1"> else {
                                 g.State = _WAITING_FOR_REMATCH
@@ -219,8 +226,8 @@ func (g *game) makeChoice(userId string, choice string) error <span class="cov8"
                 if now().After(g.TurnStart) </span><span class="cov8" title="1">{
                         g.CurrentChoices[idx] = choice
                         if g.CurrentChoices[0] != `` &amp;&amp; g.CurrentChoices[1] != ``</span><span class="cov8" title="1">{
-                                g.PastChoices = append(g.PastChoices, g.CurrentChoices)
-                                if len(g.PastChoices) &gt;= _MAX_TURNS </span><span class="cov8" title="1">{
+                                g.PastChoices = append(g.PastChoices, g.CurrentChoices[0], g.CurrentChoices[1])
+                                if len(g.PastChoices) &gt;= _DOUBLE_MAX_TURNS</span><span class="cov8" title="1">{
                                         g.State = _DEACTIVATED
                                 }</span><span class="cov8" title="1"> else {
                                         g.State = _WAITING_FOR_REMATCH
@@ -296,14 +303,14 @@ const(
 func RouteLocalTest(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string)<span class="cov8" title="1">{
         initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
         deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
-        joak.RouteLocalTest(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter)
+        joak.RouteLocalTest(router, newGame, initGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter)
 }</span>
 
 func RouteGaeProd(router *mux.Router, options []string, resultHalfMatrix [][]int, millisecsPerChoice int, newAuthKey string, newCrypKey string, oldAuthKey string, oldCrypKey string, ctxFactory joak.ContextFactory) error <span class="cov8" title="1">{
         initStaticProperties(options, resultHalfMatrix, millisecsPerChoice)
         deleteAfter, _ := time.ParseDuration(_DELETE_AFTER)
         clearAfter, _ := time.ParseDuration(_DELETE_AFTER)
-        return joak.RouteGaeProd(router, newGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctxFactory)
+        return joak.RouteGaeProd(router, newGame, initGame, 300, `rps`, newAuthKey, newCrypKey, oldAuthKey, oldCrypKey, newGame(), getJoinResp, getEntityChangeResp, performAct, deleteAfter, clearAfter, `game`, ctxFactory)
 }</span>
 
 func initStaticProperties(ops []string, rhm [][]int, millisecsPerChoice int)<span class="cov8" title="1">{
@@ -321,7 +328,7 @@ func getJoinResp(userId string, e oak.Entity) oak.Json <span class="cov8" title=
         resp[`resultHalfMatrix`] = resultHalfMatrix
         resp[`turnLength`] = turnLength
         resp[`rematchTimeLimit`] = _REMATCH_TIME_LIMIT
-        resp[`maxTurns`] = _MAX_TURNS
+        resp[`maxTurns`] = _DOUBLE_MAX_TURNS / 2
         resp[`myIdx`] = g.getPlayerIdx(userId)
         return resp
 }</span>
@@ -336,7 +343,7 @@ func getEntityChangeResp(userId string, e oak.Entity) oak.Json <span class="cov8
                 `pastChoicesCount`: pastChoicesCount,
         }
         if pastChoicesCount &gt; 0 </span><span class="cov8" title="1">{
-                json[`penultimateChoices`] = g.PastChoices[pastChoicesCount - 1]
+                json[`penultimateChoices`] = g.PastChoices[pastChoicesCount - 2:]
         }</span>
         <span class="cov8" title="1">if g.State == _GAME_IN_PROGRESS </span><span class="cov8" title="1">{
                 idx := g.getPlayerIdx(userId)

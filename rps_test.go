@@ -25,7 +25,7 @@ func Test_RouteGae(t *testing.T){
 
 func Test_getJoinResp(t *testing.T){
 	standardSetup()
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 
 	json := getJoinResp(``, g)
 
@@ -39,15 +39,15 @@ func Test_getJoinResp(t *testing.T){
 	assert.Equal(t, g.CurrentChoices, json[`currentChoices`], `currentChoices should be g.CurrentChoices`)
 	assert.Equal(t, g.PastChoices, json[`pastChoices`], `pastChoices should be g.PastChoices`)
 	assert.Equal(t, _REMATCH_TIME_LIMIT, json[`rematchTimeLimit`], `rematchTimeLimit should be _RESTART_TIME_LIMIT`)
-	assert.Equal(t, _MAX_TURNS, json[`maxTurns`], `maxTurns should be _MAX_TURNS`)
+	assert.Equal(t, _DOUBLE_MAX_TURNS / 2, json[`maxTurns`], `maxTurns should be _DOUBLE_MAX_TURNS / 2`)
 	assert.Equal(t, len(g.PastChoices), json[`pastChoicesCount`], `pastChoicesCount should len(g.PastChoices)`)
 	assert.Equal(t, 11, len(json), `json should contain 11 entries`)
 }
 
 func Test_getEntityChangeResp(t *testing.T){
 	standardSetup()
-	g := newGame().(*game)
-	g.PastChoices = [][]string{[]string{`rck`, `ppr`}}
+	g := initGame(newGame()).(*game)
+	g.PastChoices = []string{`rck`, `ppr`}
 
 	json := getEntityChangeResp(``, g)
 
@@ -62,7 +62,7 @@ func Test_getEntityChangeResp(t *testing.T){
 
 func Test_getEntityChangeResp_when_one_user_has_entered_a_choice_and_tother_hasnt(t *testing.T){
 	standardSetup()
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`1`, `2`}
 	g.CurrentChoices = []string{`rck`, ``}
@@ -79,7 +79,7 @@ func Test_getEntityChangeResp_when_one_user_has_entered_a_choice_and_tother_hasn
 func Test_performAct_without_act_param(t *testing.T){
 	standardSetup()
 	json := oak.Json{}
-	g := newGame()
+	g := initGame(newGame())
 
 	err := performAct(json, ``, g)
 
@@ -89,7 +89,7 @@ func Test_performAct_without_act_param(t *testing.T){
 func Test_performAct_with_non_string_act_param(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:true}
-	g := newGame()
+	g := initGame(newGame())
 
 	err := performAct(json, ``, g)
 
@@ -99,7 +99,7 @@ func Test_performAct_with_non_string_act_param(t *testing.T){
 func Test_performAct_with_invalid_act_param(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:`fail`}
-	g := newGame()
+	g := initGame(newGame())
 
 	err := performAct(json, ``, g)
 
@@ -109,7 +109,7 @@ func Test_performAct_with_invalid_act_param(t *testing.T){
 func Test_performAct_restart_when_inappropriate_time(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:_RESTART}
-	g := newGame()
+	g := initGame(newGame())
 
 	err := performAct(json, ``, g)
 
@@ -120,7 +120,7 @@ func Test_performAct_restart_with_invalid_user(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:_RESTART}
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_REMATCH
@@ -134,7 +134,7 @@ func Test_performAct_restart_success(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:_RESTART}
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	dur, _ := time.ParseDuration(`-` + strconv.Itoa(turnLength + 1000) + _TIME_UNIT)
 	g.TurnStart = now().Add(dur)
 	g.State = _WAITING_FOR_REMATCH
@@ -165,7 +165,7 @@ func Test_performAct_choose_without_val_param(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE}
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now()
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`0`, `1`}
@@ -179,7 +179,7 @@ func Test_performAct_choose_with_non_string_val_param(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:true}
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now()
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`0`, `1`}
@@ -193,7 +193,7 @@ func Test_performAct_choose_when_game_not_in_progress(t *testing.T){
 	standardSetup()
 	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now()
 	g.State = _WAITING_FOR_OPPONENT
 
@@ -207,7 +207,7 @@ func Test_performAct_choose_with_invalid_player_id(t *testing.T){
 	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
 	dur, _ := time.ParseDuration(`-1s`)
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`0`, `1`}
@@ -222,7 +222,7 @@ func Test_performAct_choose_with_invalid_choice(t *testing.T){
 	json := oak.Json{_ACT:_CHOOSE, _VAL:`wrong_val`}
 	dur, _ := time.ParseDuration(`-1s`)
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`0`, `1`}
@@ -237,7 +237,7 @@ func Test_performAct_choose_when_players_choice_has_already_been_made(t *testing
 	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
 	dur, _ := time.ParseDuration(`-1s`)
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`0`, `1`}
@@ -253,7 +253,7 @@ func Test_performAct_choose_when_turn_has_not_started(t *testing.T){
 	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
 	dur, _ := time.ParseDuration(`1s`)
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`0`, `1`}
@@ -268,7 +268,7 @@ func Test_performAct_choose_success(t *testing.T){
 	json := oak.Json{_ACT:_CHOOSE, _VAL:_RCK}
 	dur, _ := time.ParseDuration(`-1s`)
 
-	g := newGame().(*game)
+	g := initGame(newGame()).(*game)
 	g.TurnStart = now().Add(dur)
 	g.State = _GAME_IN_PROGRESS
 	g.PlayerIds = []string{`0`, `1`}
